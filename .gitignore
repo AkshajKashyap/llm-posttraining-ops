@@ -8,7 +8,10 @@ data/raw/
 data/processed/*
 !data/processed/demo/
 !data/processed/demo/*.jsonl
-artifacts/
+artifacts/*
+!artifacts/evals/
+artifacts/evals/*
+!artifacts/evals/baseline_eval.json
 *.pt
 *.pth
 *.safetensors
