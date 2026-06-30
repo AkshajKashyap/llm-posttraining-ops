@@ -120,11 +120,90 @@ from llm_posttraining_ops.training.sft import (
     SFTTrainingError,
     run_sft_training,
 )
+from llm_posttraining_ops.workflows.report import DEFAULT_WORKFLOW_REPORT_PATH
+from llm_posttraining_ops.workflows.runner import (
+    DEFAULT_RUNS_DIR,
+    DemoWorkflowConfig,
+    run_demo_workflow,
+)
 
 app = typer.Typer(
     no_args_is_help=True,
     help="Reproducible utilities for LLM post-training operations.",
 )
+
+
+@app.command("run-demo-workflow")
+def run_demo_workflow_command(
+    run_id: Annotated[
+        str | None,
+        typer.Option("--run-id", help="Stable experiment run identifier."),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", file_okay=False),
+    ] = DEFAULT_RUNS_DIR,
+    skip_model: Annotated[
+        bool,
+        typer.Option("--skip-model", help="Skip Hugging Face base-model evaluation."),
+    ] = False,
+    skip_sft: Annotated[
+        bool,
+        typer.Option("--skip-sft", help="Skip one-step supervised fine-tuning."),
+    ] = False,
+    skip_dpo: Annotated[
+        bool,
+        typer.Option("--skip-dpo", help="Skip one-step preference tuning."),
+    ] = False,
+    continue_on_error: Annotated[
+        bool,
+        typer.Option(
+            "--continue-on-error",
+            help="Continue later stages and return zero after recorded failures.",
+        ),
+    ] = False,
+    seed: Annotated[int, typer.Option("--seed", min=0)] = 42,
+    model_name: Annotated[
+        str,
+        typer.Option("--model-name"),
+    ] = DEFAULT_MODEL_NAME,
+    report_output: Annotated[
+        Path,
+        typer.Option("--report-output", dir_okay=False),
+    ] = DEFAULT_WORKFLOW_REPORT_PATH,
+) -> None:
+    """Run the reproducible local data, evaluation, training, and gate workflow."""
+
+    try:
+        result = run_demo_workflow(
+            DemoWorkflowConfig(
+                run_id=run_id,
+                output_dir=output_dir,
+                seed=seed,
+                model_name=model_name,
+                skip_model=skip_model,
+                skip_sft=skip_sft,
+                skip_dpo=skip_dpo,
+                continue_on_error=continue_on_error,
+                report_path=report_output,
+            )
+        )
+    except (OSError, ValueError) as exc:
+        typer.echo(f"Workflow failed to initialize: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    passed = sum(stage.status == "pass" for stage in result.stages)
+    failed = sum(stage.status == "fail" for stage in result.stages)
+    skipped = sum(stage.status == "skipped" for stage in result.stages)
+    typer.echo(
+        f"Workflow {result.run_id}: {result.status} "
+        f"({passed} passed, {failed} failed, {skipped} skipped)"
+    )
+    typer.echo(f"Run directory: {result.run_dir}")
+    typer.echo(f"Workflow summary: {result.summary_path}")
+    typer.echo(f"Workflow report: {result.report_path}")
+    if result.status == "fail" and not continue_on_error:
+        raise typer.Exit(code=1)
 
 
 @app.command("prepare-demo-data")

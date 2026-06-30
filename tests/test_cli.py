@@ -473,3 +473,26 @@ def test_monitoring_and_release_gate_cli(tmp_path: Path) -> None:
     assert "Release gate: pass (4/4 checks passed)" in gate_result.output
     assert gate_output.is_file()
     assert gate_report.is_file()
+
+
+def test_demo_workflow_cli_without_models(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        [
+            "run-demo-workflow",
+            "--run-id",
+            "cli-smoke",
+            "--output-dir",
+            str(tmp_path / "runs"),
+            "--skip-model",
+            "--skip-sft",
+            "--skip-dpo",
+            "--report-output",
+            str(tmp_path / "workflow_report.md"),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Workflow cli-smoke: pass (8 passed, 0 failed, 3 skipped)" in result.output
+    assert (tmp_path / "runs/cli-smoke/workflow_summary.json").is_file()
+    assert (tmp_path / "workflow_report.md").is_file()

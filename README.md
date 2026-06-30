@@ -403,3 +403,80 @@ that metric is present. The JSON decision is written to
 `artifacts/evals/release_gate.json`, with an auditable Markdown report at
 `reports/release_gate_report.md`. Failed monitoring and release gates return a
 non-zero CLI exit code for CI use.
+
+## Milestone 10
+
+Milestone 10 connects data preparation, evaluation, optional training, and
+release checks through a reproducible workflow runner. Every run has an
+experiment registry, manifest, stage outcomes, and isolated artifacts.
+
+Run the deterministic no-download workflow:
+
+```bash
+python -m llm_posttraining_ops.cli run-demo-workflow \
+  --run-id smoke \
+  --skip-model \
+  --skip-sft \
+  --skip-dpo
+```
+
+This still executes local SFT and preference ingestion, validation, profiling,
+model-free baseline evaluation, the rigorous evaluation suite, and the release
+gate. It skips only Hugging Face inference and training.
+
+Run the tiny base-model path without training:
+
+```bash
+python -m llm_posttraining_ops.cli run-demo-workflow \
+  --run-id tiny-model \
+  --skip-sft \
+  --skip-dpo
+```
+
+Run all stages, including one-step SFT and DPO:
+
+```bash
+python -m llm_posttraining_ops.cli run-demo-workflow \
+  --run-id full-tiny \
+  --model-name sshleifer/tiny-gpt2 \
+  --seed 42
+```
+
+Run artifacts are isolated under `artifacts/runs/<run_id>/`:
+
+```text
+artifacts/runs/<run_id>/
+├── data/
+│   ├── sft/sft.jsonl
+│   └── preferences/preference.jsonl
+├── evals/
+│   ├── generations/
+│   ├── baseline_eval.json
+│   ├── eval_suite.json
+│   ├── release_gate.json
+│   ├── sft_profile.json
+│   └── preference_profile.json
+├── models/
+├── reports/
+├── experiment_registry.json
+├── reproducibility_manifest.json
+├── workflow_summary.json
+└── workflow_report.md
+```
+
+The manifest records package, Python, platform, dependency and Git versions;
+the seed and run ID; model names/checkpoints; and source/normalized data paths.
+The final report is also written to `reports/workflow_report.md`.
+
+Stages stop after the first failure by default, while the registry, manifest,
+summary, and report are still finalized. Pass `--continue-on-error` to attempt
+later stages and return a zero CLI exit code after recording failures:
+
+```bash
+python -m llm_posttraining_ops.cli run-demo-workflow \
+  --run-id diagnostic \
+  --continue-on-error \
+  --skip-model \
+  --skip-sft \
+  --skip-dpo
+```
