@@ -396,3 +396,36 @@ def test_eval_suite_and_pairwise_cli(tmp_path: Path) -> None:
     assert "left=0, right=3, ties=1" in pairwise_result.output
     assert pairwise_output.is_file()
     assert pairwise_report.is_file()
+
+
+def test_serve_cli_smoke_uses_mock_app(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    captured: dict[str, Any] = {}
+
+    def fake_run(api: Any, *, host: str, port: int) -> None:
+        captured["api"] = api
+        captured["host"] = host
+        captured["port"] = port
+
+    monkeypatch.setattr("uvicorn.run", fake_run)
+    result = runner.invoke(
+        app,
+        [
+            "serve",
+            "--mock",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            "8123",
+            "--log-path",
+            str(tmp_path / "inference.jsonl"),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["host"] == "0.0.0.0"
+    assert captured["port"] == 8123
+    assert captured["api"].state.model_manager.mock is True
+    assert captured["api"].state.model_manager.loaded is False

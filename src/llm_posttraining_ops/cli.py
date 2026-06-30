@@ -69,6 +69,7 @@ from llm_posttraining_ops.inference.evaluation import (
     run_model_evaluation,
 )
 from llm_posttraining_ops.inference.huggingface import ModelInferenceError
+from llm_posttraining_ops.serving.logging import DEFAULT_INFERENCE_LOG_PATH
 from llm_posttraining_ops.training.dpo import (
     DEFAULT_DPO_SUMMARY_PATH,
     DPOTrainingError,
@@ -894,6 +895,41 @@ def evaluate_dpo_command(
         f"Generation latency: {result.latency.total_generation_seconds:.3f}s total, "
         f"{result.latency.average_seconds_per_example:.3f}s/example"
     )
+
+
+@app.command("serve")
+def serve_command(
+    model_name: Annotated[
+        str,
+        typer.Option("--model-name", help="Hugging Face model ID or local checkpoint."),
+    ] = DEFAULT_MODEL_NAME,
+    host: Annotated[str, typer.Option("--host")] = "127.0.0.1",
+    port: Annotated[int, typer.Option("--port", min=1, max=65535)] = 8000,
+    mock: Annotated[
+        bool,
+        typer.Option("--mock/--no-mock", help="Use deterministic mock generation."),
+    ] = False,
+    log_path: Annotated[
+        Path,
+        typer.Option("--log-path", dir_okay=False),
+    ] = DEFAULT_INFERENCE_LOG_PATH,
+) -> None:
+    """Serve the lazy local generation API with Uvicorn."""
+
+    try:
+        import uvicorn
+
+        from llm_posttraining_ops.serving.app import create_app
+
+        api = create_app(
+            model_name=model_name,
+            mock=mock,
+            log_path=log_path,
+        )
+        uvicorn.run(api, host=host, port=port)
+    except (ImportError, OSError, ValueError) as exc:
+        typer.echo(f"Serving failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
 
 
 @app.command("generate-baseline-report")

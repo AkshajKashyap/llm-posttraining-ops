@@ -300,3 +300,55 @@ JSON results are written under `artifacts/evals/`. Markdown reports are generate
 at `reports/eval_suite_report.md` and
 `reports/pairwise_comparison_report.md`. When present, rigorous-suite metrics can
 also be included in regenerated baseline, SFT, and DPO reports.
+
+## Milestone 8
+
+Milestone 8 adds a local FastAPI serving layer with lazy checkpoint loading,
+deterministic mock mode, generation/evaluation endpoints, health checks, and
+structured JSONL inference logs.
+
+Start a real model service:
+
+```bash
+python -m llm_posttraining_ops.cli serve \
+  --model-name sshleifer/tiny-gpt2 \
+  --host 0.0.0.0 \
+  --port 8000
+```
+
+The model is not loaded by `/health` or `/model-info`; loading occurs on the first
+generation request. A local full-model checkpoint or PEFT SFT/DPO adapter directory
+can be passed to `--model-name`.
+
+Start deterministic mock mode without loading a model:
+
+```bash
+python -m llm_posttraining_ops.cli serve --mock --host 0.0.0.0 --port 8000
+```
+
+Example requests:
+
+```bash
+curl http://localhost:8000/health
+curl http://localhost:8000/model-info
+
+curl -X POST http://localhost:8000/generate \
+  -H "Content-Type: application/json" \
+  -d '{"instruction":"Explain SFT in one sentence.","input":"","max_new_tokens":32}'
+
+curl -X POST http://localhost:8000/batch-generate \
+  -H "Content-Type: application/json" \
+  -d '{"items":[{"instruction":"Define SFT."},{"instruction":"Define DPO."}],"seed":42}'
+
+curl -X POST http://localhost:8000/evaluate-generation \
+  -H "Content-Type: application/json" \
+  -d '{"instruction":"Name the capital of France.","reference_output":"Paris.","generated_response":"London.","required_facts":["Paris"],"forbidden_terms":["London"],"task_type":"short_answer"}'
+```
+
+The convenience script `scripts/smoke_api.sh` calls health, model information, and
+single generation against `http://localhost:8000` (override with `BASE_URL`).
+
+Inference events are appended to `artifacts/logs/inference_logs.jsonl`. Each event
+contains a request ID, UTC timestamp, endpoint, model, mock flag, prompt and caller
+metadata, generation settings, latency, token/character response lengths, status,
+and any error. Generated logs remain ignored by Git.
