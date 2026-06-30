@@ -13,6 +13,10 @@ artifacts/*
 artifacts/evals/*
 !artifacts/evals/baseline_eval.json
 !artifacts/evals/dataset_profile.json
+!artifacts/evals/model_eval.json
+!artifacts/evals/generations/
+artifacts/evals/generations/*
+!artifacts/evals/generations/sshleifer_tiny-gpt2.jsonl
 *.pt
 *.pth
 *.safetensors

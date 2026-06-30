@@ -30,6 +30,16 @@ from llm_posttraining_ops.evaluation.report import (
     ReportError,
     generate_baseline_report,
 )
+from llm_posttraining_ops.inference.config import (
+    DEFAULT_MODEL_NAME,
+    GenerationConfigError,
+    GenerationSettings,
+)
+from llm_posttraining_ops.inference.evaluation import (
+    DEFAULT_MODEL_EVALUATION_PATH,
+    run_model_evaluation,
+)
+from llm_posttraining_ops.inference.huggingface import ModelInferenceError
 
 app = typer.Typer(
     no_args_is_help=True,
@@ -219,6 +229,89 @@ def run_baseline_eval_command(
     typer.echo(f"Wrote evaluation results to {output}")
 
 
+@app.command("run-model-eval")
+def run_model_eval_command(
+    data_dir: Annotated[
+        Path,
+        typer.Option(
+            "--data-dir",
+            exists=True,
+            file_okay=False,
+            readable=True,
+            help="Directory containing normalized sft.jsonl.",
+        ),
+    ] = Path("data/processed/custom"),
+    model_name: Annotated[
+        str,
+        typer.Option("--model-name", help="Hugging Face causal LM name or local path."),
+    ] = DEFAULT_MODEL_NAME,
+    max_new_tokens: Annotated[
+        int,
+        typer.Option("--max-new-tokens", min=1, help="Maximum generated tokens."),
+    ] = 32,
+    temperature: Annotated[
+        float,
+        typer.Option("--temperature", min=0.0, help="Sampling temperature; 0 is greedy."),
+    ] = 0.0,
+    top_p: Annotated[
+        float,
+        typer.Option("--top-p", min=0.0, max=1.0, help="Nucleus sampling probability."),
+    ] = 1.0,
+    seed: Annotated[
+        int,
+        typer.Option("--seed", min=0, help="Generation seed."),
+    ] = 42,
+    output: Annotated[
+        Path,
+        typer.Option("--output", dir_okay=False, help="Model evaluation JSON output."),
+    ] = DEFAULT_MODEL_EVALUATION_PATH,
+    generations_output: Annotated[
+        Path | None,
+        typer.Option(
+            "--generations-output",
+            dir_okay=False,
+            help="Optional generations JSONL output path.",
+        ),
+    ] = None,
+) -> None:
+    """Run CPU-first Hugging Face model inference and evaluation."""
+
+    try:
+        settings = GenerationSettings(
+            model_name=model_name,
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            seed=seed,
+        )
+        result = run_model_evaluation(
+            data_dir,
+            settings,
+            output_path=output,
+            generations_path=generations_output,
+        )
+    except (
+        DataValidationError,
+        GenerationConfigError,
+        JsonlError,
+        ModelInferenceError,
+        OSError,
+        ValueError,
+    ) as exc:
+        typer.echo(f"Model evaluation failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(
+        f"Evaluated {result.dataset.record_count} records with model {result.model.name}"
+    )
+    typer.echo(f"Wrote model generations to {result.generations_path}")
+    typer.echo(f"Wrote model evaluation to {output}")
+    typer.echo(
+        f"Generation latency: {result.latency.total_generation_seconds:.3f}s total, "
+        f"{result.latency.average_seconds_per_example:.3f}s/example"
+    )
+
+
 @app.command("generate-baseline-report")
 def generate_baseline_report_command(
     evaluation_path: Annotated[
@@ -235,11 +328,25 @@ def generate_baseline_report_command(
         Path,
         typer.Option("--output", dir_okay=False, help="Markdown report output path."),
     ] = DEFAULT_REPORT_PATH,
+    model_evaluation_path: Annotated[
+        Path,
+        typer.Option(
+            "--model-evaluation-path",
+            dir_okay=False,
+            help="Optional model evaluation JSON artifact.",
+        ),
+    ] = DEFAULT_MODEL_EVALUATION_PATH,
 ) -> None:
-    """Generate a Markdown report from baseline evaluation JSON."""
+    """Generate a combined baseline and optional model Markdown report."""
 
     try:
-        report_path = generate_baseline_report(evaluation_path, output)
+        report_path = generate_baseline_report(
+            evaluation_path,
+            output,
+            model_evaluation_path=(
+                model_evaluation_path if model_evaluation_path.exists() else None
+            ),
+        )
     except (ReportError, OSError) as exc:
         typer.echo(f"Report generation failed: {exc}", err=True)
         raise typer.Exit(code=1) from exc

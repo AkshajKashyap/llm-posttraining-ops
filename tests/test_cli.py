@@ -1,4 +1,6 @@
 from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
 from typer.testing import CliRunner
 
@@ -113,3 +115,58 @@ def test_ingestion_and_profiling_cli(tmp_path: Path) -> None:
     )
     assert evaluation_result.exit_code == 0
     assert "Evaluated 4 records with 3 baselines" in evaluation_result.output
+
+
+def test_model_evaluation_cli_uses_mock_without_download(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    data_dir = tmp_path / "custom"
+    data_dir.mkdir()
+    captured: dict[str, Any] = {}
+
+    def fake_run_model_evaluation(
+        passed_data_dir: Path,
+        settings: Any,
+        **kwargs: Any,
+    ) -> Any:
+        captured["data_dir"] = passed_data_dir
+        captured["settings"] = settings
+        captured["kwargs"] = kwargs
+        return SimpleNamespace(
+            dataset=SimpleNamespace(record_count=2),
+            model=SimpleNamespace(name=settings.model_name),
+            generations_path="mock-generations.jsonl",
+            latency=SimpleNamespace(
+                total_generation_seconds=0.4,
+                average_seconds_per_example=0.2,
+            ),
+        )
+
+    monkeypatch.setattr(
+        "llm_posttraining_ops.cli.run_model_evaluation",
+        fake_run_model_evaluation,
+    )
+    result = runner.invoke(
+        app,
+        [
+            "run-model-eval",
+            "--data-dir",
+            str(data_dir),
+            "--model-name",
+            "mock/model",
+            "--max-new-tokens",
+            "7",
+            "--seed",
+            "5",
+            "--output",
+            str(tmp_path / "model_eval.json"),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Evaluated 2 records with model mock/model" in result.output
+    assert "0.200s/example" in result.output
+    assert captured["data_dir"] == data_dir
+    assert captured["settings"].max_new_tokens == 7
+    assert captured["settings"].seed == 5

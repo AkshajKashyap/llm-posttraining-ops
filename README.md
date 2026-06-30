@@ -117,4 +117,44 @@ python -m llm_posttraining_ops.cli run-baseline-eval \
 python -m llm_posttraining_ops.cli generate-baseline-report
 ```
 
-No command downloads a model or dataset.
+Milestones 1–3 do not download a model or dataset.
+
+## Milestone 4
+
+Milestone 4 adds CPU-first causal language-model inference through Hugging Face
+Transformers. Instruction examples use a consistent prompt with `Instruction`,
+optional `Input`, and `Response` sections.
+
+Run the default tiny model against normalized custom data:
+
+```bash
+python -m llm_posttraining_ops.cli run-model-eval \
+  --data-dir data/processed/custom \
+  --model-name sshleifer/tiny-gpt2
+```
+
+The first real run may download the tiny model from Hugging Face. Tests use mocks
+and never download a model. Generation defaults to deterministic greedy decoding
+on CPU and supports:
+
+```text
+--max-new-tokens 32
+--temperature 0.0
+--top-p 1.0
+--seed 42
+```
+
+Model generations are written under `artifacts/evals/generations/`, and aggregate
+metrics plus latency are written to `artifacts/evals/model_eval.json`. Latency
+includes total generation time, average seconds per example, and average generated
+tokens.
+
+Regenerate the report after model evaluation:
+
+```bash
+python -m llm_posttraining_ops.cli generate-baseline-report
+```
+
+When `model_eval.json` is present, the report compares the Hugging Face model with
+the echo, template, and keyword/rule baselines and includes a model latency section.
+No fine-tuning is performed.
