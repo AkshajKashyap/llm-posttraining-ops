@@ -1,0 +1,35 @@
+[project]
+name = "llm-posttraining-ops"
+version = "0.1.0"
+description = "End-to-end LLM fine-tuning and evaluation system with SFT, preference tuning, evaluation, serving, and monitoring."
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "torch",
+    "transformers",
+    "datasets",
+    "accelerate",
+    "peft",
+    "trl",
+    "evaluate",
+    "scikit-learn",
+    "pandas",
+    "numpy",
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "typer",
+    "rich",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

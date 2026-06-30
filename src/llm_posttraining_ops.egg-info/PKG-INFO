@@ -1,0 +1,28 @@
+Metadata-Version: 2.4
+Name: llm-posttraining-ops
+Version: 0.1.0
+Summary: End-to-end LLM fine-tuning and evaluation system with SFT, preference tuning, evaluation, serving, and monitoring.
+Requires-Python: <3.12,>=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: torch
+Requires-Dist: transformers
+Requires-Dist: datasets
+Requires-Dist: accelerate
+Requires-Dist: peft
+Requires-Dist: trl
+Requires-Dist: evaluate
+Requires-Dist: scikit-learn
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: fastapi
+Requires-Dist: uvicorn
+Requires-Dist: pydantic
+Requires-Dist: typer
+Requires-Dist: rich
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+
+# LLM Post-Training Ops
+
+End-to-end LLM fine-tuning and evaluation system with supervised fine-tuning, preference tuning, benchmark evaluation, hallucination checks, serving, and experiment reports.
