@@ -4,6 +4,11 @@ version = "0.1.0"
 description = "End-to-end LLM fine-tuning and evaluation system with SFT, preference tuning, evaluation, serving, and monitoring."
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
+license = {file = "LICENSE"}
+authors = [
+    {name = "Akshaj Kashyap"},
+]
+keywords = ["llm", "post-training", "sft", "dpo", "evaluation", "mlops"]
 dependencies = [
     "accelerate>=1.0",
     "fastapi>=0.115,<0.130",

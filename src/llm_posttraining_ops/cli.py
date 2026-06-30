@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import platform
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
+from llm_posttraining_ops import __version__
 from llm_posttraining_ops.config import ConfigError, load_config
 from llm_posttraining_ops.data.generation import prepare_demo_data
 from llm_posttraining_ops.data.ingestion import (
@@ -131,6 +133,42 @@ app = typer.Typer(
     no_args_is_help=True,
     help="Reproducible utilities for LLM post-training operations.",
 )
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        typer.echo(f"llm-posttraining-ops {__version__}")
+        raise typer.Exit()
+
+
+@app.callback()
+def main(
+    version: Annotated[
+        bool,
+        typer.Option(
+            "--version",
+            callback=_version_callback,
+            is_eager=True,
+            help="Show the package version and exit.",
+        ),
+    ] = False,
+) -> None:
+    """Run reproducible LLM post-training operations."""
+
+    del version
+
+
+@app.command("project-info")
+def project_info_command() -> None:
+    """Show release, runtime, and capability information."""
+
+    typer.echo("Project: llm-posttraining-ops")
+    typer.echo(f"Version: {__version__}")
+    typer.echo(f"Python: {platform.python_version()}")
+    typer.echo("Runtime: Python 3.11, CPU-compatible")
+    typer.echo("Training: causal-LM SFT and DPO, with optional LoRA")
+    typer.echo("Serving: FastAPI with lazy Hugging Face loading and mock mode")
+    typer.echo("Evaluation: deterministic metrics, pairwise checks, and release gates")
 
 
 @app.command("run-demo-workflow")

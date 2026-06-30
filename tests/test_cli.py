@@ -10,6 +10,19 @@ from llm_posttraining_ops.data.jsonl import write_jsonl
 runner = CliRunner()
 
 
+def test_version_and_project_info_cli() -> None:
+    version_result = runner.invoke(app, ["--version"])
+    info_result = runner.invoke(app, ["project-info"])
+
+    assert version_result.exit_code == 0
+    assert version_result.output == "llm-posttraining-ops 0.1.0\n"
+    assert info_result.exit_code == 0
+    assert "Project: llm-posttraining-ops" in info_result.output
+    assert "Version: 0.1.0" in info_result.output
+    assert "CPU-compatible" in info_result.output
+    assert "SFT and DPO" in info_result.output
+
+
 def test_baseline_evaluation_and_report_cli(tmp_path: Path) -> None:
     data_dir = tmp_path / "data"
     write_jsonl(

@@ -1,6 +1,132 @@
 # LLM Post-Training Ops
 
-An incremental, reproducible foundation for LLM post-training workflows.
+`llm-posttraining-ops` is an end-to-end, CPU-compatible reference system for
+the engineering around language-model post-training. It connects local dataset
+normalization, SFT, DPO, deterministic evaluation, checkpoint inference,
+FastAPI serving, monitoring, release gates, and reproducible experiment runs.
+
+The project matters because training code is only one piece of a credible model
+release. Data contracts, testable evaluation, artifact lineage, failure
+handling, serving behavior, and regression policy need to agree end to end.
+This repository makes those boundaries inspectable without requiring a GPU.
+
+> Version 0.1.0 is portfolio and infrastructure software. Its tiny fixtures and
+> one-step training paths prove the system wiring; they do not establish model
+> quality improvement.
+
+## System overview
+
+```mermaid
+flowchart LR
+    A[Local SFT and preference JSONL] --> B[Normalize and validate]
+    B --> C[Profile and dataset cards]
+    B --> D[Baselines / HF inference]
+    B --> E[SFT]
+    B --> F[DPO]
+    E --> F
+    D --> G[Saved generations]
+    E --> G
+    F --> G
+    G --> H[Deterministic eval + pairwise comparison]
+    H --> I[Release gate]
+    D --> J[FastAPI serving]
+    E --> J
+    F --> J
+    J --> K[Inference logs and monitoring]
+    C --> L[Workflow registry]
+    I --> L
+    K --> L
+    L --> M[Manifest, summary, reports]
+```
+
+See [architecture](docs/architecture.md), [model card](docs/model_card.md),
+[evaluation methodology](docs/evaluation_methodology.md), and
+[interview notes](docs/interview_notes.md) for the design rationale.
+
+## Main capabilities
+
+- Typed SFT and chosen/rejected preference schemas with local JSONL ingestion.
+- Deterministic validation, profiling, dataset cards, fixtures, and baselines.
+- Hugging Face causal-LM inference with saved generations and latency tracking.
+- Trainer-based SFT and TRL DPO, including optional PEFT LoRA adapters.
+- Reference-backed metrics, format checks, hallucination heuristics, and pairwise comparison.
+- FastAPI generation and evaluation endpoints with lazy loading and mock mode.
+- Structured inference logs, percentile monitoring, and CI-friendly release gates.
+- Isolated workflow runs with stage status, provenance manifests, and reports.
+- Download-free unit tests, CI workflow smoke, and CPU/mock Docker serving.
+
+## Quickstart
+
+```bash
+python -m pip install -e ".[dev]"
+
+python -m llm_posttraining_ops.cli --version
+python -m llm_posttraining_ops.cli project-info
+
+# Complete deterministic path with no model download or training:
+python -m llm_posttraining_ops.cli run-demo-workflow \
+  --run-id quickstart \
+  --skip-model \
+  --skip-sft \
+  --skip-dpo
+
+pytest -q
+ruff check .
+```
+
+Common shortcuts are available through:
+
+```bash
+make install
+make test
+make lint
+make workflow-smoke
+make serve-mock
+```
+
+## Verification status
+
+Release verification on Python 3.11:
+
+```text
+113 tests passed
+ruff check . passed
+workflow smoke: 8 passed, 0 failed, 3 skipped
+FastAPI mock smoke: health, model-info, and generation passed
+```
+
+GitHub Actions repeats lint, tests, and the download-free workflow smoke.
+Docker smoke support is available through `scripts/docker_smoke_test.sh`.
+
+## What is tiny and what is production-patterned?
+
+| Intentionally tiny / smoke-tested | Production-patterned |
+| --- | --- |
+| Four-record local fixtures | Normalized schemas and provenance fields |
+| `sshleifer/tiny-gpt2` | Base/checkpoint/PEFT adapter resolution |
+| One-step SFT and DPO | Masked labels, configurable training, isolated outputs |
+| Deterministic mock generator | Lazy loading, typed API contracts, structured logs |
+| Lexical and heuristic eval cases | Per-example evidence, pairwise policy, regression gates |
+| Single-process CPU service | Health checks, monitoring metrics, reproducible manifests |
+
+## Limitations
+
+- Tiny fixtures are useful for deterministic tests, not meaningful quality evaluation.
+- `sshleifer/tiny-gpt2` is a plumbing model, not a useful instruction-following baseline.
+- One-step SFT and DPO prove infrastructure execution, not quality improvement.
+- Deterministic local evaluation is transparent and CI-friendly, but does not
+  replace representative human evaluation or calibrated LLM-judge evaluation.
+- The local FastAPI service does not include production authentication, rate
+  limiting, distributed inference, or load-tested scaling.
+
+## Release and portfolio documents
+
+- [Release checklist](docs/release_checklist.md)
+- [Changelog](CHANGELOG.md)
+- [Portfolio release report](reports/portfolio/release_0.1.0.md)
+- [License](LICENSE) and [citation metadata](CITATION.cff)
+
+## Milestone history
 
 ## Milestone 1
 

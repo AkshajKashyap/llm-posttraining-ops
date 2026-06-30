@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "llm-posttraining-ops"
+abstract: "A reproducible, CPU-testable reference implementation for LLM post-training operations."
+type: software
+authors:
+  - family-names: "Kashyap"
+    given-names: "Akshaj"
+version: 0.1.0
+date-released: 2026-06-30
+license: MIT
