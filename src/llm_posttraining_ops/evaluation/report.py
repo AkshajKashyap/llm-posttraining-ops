@@ -13,6 +13,7 @@ from llm_posttraining_ops.evaluation.evaluator import (
 from llm_posttraining_ops.inference.evaluation import (
     MODEL_EVALUATION_SCHEMA_VERSION,
 )
+from llm_posttraining_ops.evaluation.suite_reports import compact_suite_section, load_suite_metrics
 
 DEFAULT_REPORT_PATH = Path("reports/baseline_eval_report.md")
 
@@ -74,6 +75,7 @@ def _load_model_result(path: Path) -> dict[str, Any]:
 def render_markdown_report(
     result: dict[str, Any],
     model_result: dict[str, Any] | None = None,
+    suite_metrics: dict[str, Any] | None = None,
 ) -> str:
     """Render model-free and optional model-backed evaluation results."""
 
@@ -144,6 +146,9 @@ def render_markdown_report(
             ]
         )
 
+    if suite_metrics is not None:
+        lines.extend(["", *compact_suite_section(suite_metrics)])
+
     lines.extend(
         [
             "",
@@ -172,6 +177,7 @@ def generate_baseline_report(
     output_path: str | Path = DEFAULT_REPORT_PATH,
     *,
     model_evaluation_path: str | Path | None = None,
+    suite_result_path: str | Path | None = None,
 ) -> Path:
     """Read baseline and optional model artifacts, then write a Markdown report."""
 
@@ -181,10 +187,13 @@ def generate_baseline_report(
         if model_evaluation_path is not None
         else None
     )
+    suite_metrics = (
+        load_suite_metrics(suite_result_path) if suite_result_path is not None else None
+    )
     report_path = Path(output_path)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(
-        render_markdown_report(result, model_result),
+        render_markdown_report(result, model_result, suite_metrics),
         encoding="utf-8",
         newline="\n",
     )

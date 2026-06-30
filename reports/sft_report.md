@@ -36,3 +36,16 @@
 | --- | ---: | ---: | ---: |
 | Pre-SFT | 3.475 | 0.869 | 32.000 |
 | Post-SFT | 2.034 | 0.508 | 32.000 |
+
+## Rigorous evaluation summary
+
+| Metric | Value |
+| --- | ---: |
+| Required fact coverage | 0.000 |
+| Forbidden term violation rate | 0.000 |
+| Instruction copying rate | 0.000 |
+| Refusal rate | 0.000 |
+| Format compliance rate | 0.500 |
+| Unsupported named entity rate | 0.000 |
+| Numeric mismatch rate | 0.000 |
+| Contradiction rate | 0.000 |

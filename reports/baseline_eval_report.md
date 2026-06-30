@@ -18,9 +18,23 @@
 
 - Model: `sshleifer/tiny-gpt2`
 - Device: `cpu`
-- Total generation time: 4.795 seconds
-- Average seconds per example: 1.199
+- Total generation time: 3.475 seconds
+- Average seconds per example: 0.869
 - Average generated tokens: 32.000
+
+## Rigorous evaluation summary
+
+| Metric | Value |
+| --- | ---: |
+| Required fact coverage | 0.000 |
+| Forbidden term violation rate | 0.000 |
+| Instruction copying rate | 0.000 |
+| Refusal rate | 0.000 |
+| Format compliance rate | 0.500 |
+| Unsupported named entity rate | 0.000 |
+| Numeric mismatch rate | 0.000 |
+| Contradiction rate | 0.000 |
+
 
 ## Metric definitions
 

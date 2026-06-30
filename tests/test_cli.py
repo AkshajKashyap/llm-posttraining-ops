@@ -350,3 +350,49 @@ def test_dpo_training_and_evaluation_cli_use_mocks(
     assert "Evaluated 4 records with DPO model" in evaluation_result.output
     assert "0.100s/example" in evaluation_result.output
     assert captured["dpo_model_path"] == model_path
+
+
+def test_eval_suite_and_pairwise_cli(tmp_path: Path) -> None:
+    suite_output = tmp_path / "suite.json"
+    suite_report = tmp_path / "suite.md"
+    suite_result = runner.invoke(
+        app,
+        [
+            "run-eval-suite",
+            "--generations-path",
+            "tests/fixtures/generations_good.jsonl",
+            "--eval-data-path",
+            "tests/fixtures/eval_suite_sample.jsonl",
+            "--output",
+            str(suite_output),
+            "--report-output",
+            str(suite_report),
+        ],
+    )
+    assert suite_result.exit_code == 0
+    assert "Evaluated 4 generation records" in suite_result.output
+    assert suite_output.is_file()
+    assert suite_report.is_file()
+
+    pairwise_output = tmp_path / "pairwise.json"
+    pairwise_report = tmp_path / "pairwise.md"
+    pairwise_result = runner.invoke(
+        app,
+        [
+            "compare-generations",
+            "--left-path",
+            "tests/fixtures/generations_bad.jsonl",
+            "--right-path",
+            "tests/fixtures/generations_good.jsonl",
+            "--eval-data-path",
+            "tests/fixtures/eval_suite_sample.jsonl",
+            "--output",
+            str(pairwise_output),
+            "--report-output",
+            str(pairwise_report),
+        ],
+    )
+    assert pairwise_result.exit_code == 0
+    assert "left=0, right=3, ties=1" in pairwise_result.output
+    assert pairwise_output.is_file()
+    assert pairwise_report.is_file()

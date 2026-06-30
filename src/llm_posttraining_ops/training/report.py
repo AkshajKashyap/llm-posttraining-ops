@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 from llm_posttraining_ops.inference.evaluation import DEFAULT_MODEL_EVALUATION_PATH
+from llm_posttraining_ops.evaluation.suite import DEFAULT_EVAL_SUITE_PATH
+from llm_posttraining_ops.evaluation.suite_reports import compact_suite_section, load_suite_metrics
 from llm_posttraining_ops.training.evaluation import DEFAULT_SFT_EVALUATION_PATH
 from llm_posttraining_ops.training.sft import DEFAULT_SFT_SUMMARY_PATH
 
@@ -40,6 +42,7 @@ def render_sft_report(
     training_summary: dict[str, Any],
     pre_sft: dict[str, Any],
     post_sft: dict[str, Any],
+    suite_metrics: dict[str, Any] | None = None,
 ) -> str:
     """Render training settings, metrics, and latency as Markdown."""
 
@@ -104,6 +107,8 @@ def render_sft_report(
             "",
         ]
     )
+    if suite_metrics is not None:
+        lines.extend(compact_suite_section(suite_metrics))
     return "\n".join(lines)
 
 
@@ -113,16 +118,21 @@ def generate_sft_report(
     pre_sft_path: str | Path = DEFAULT_MODEL_EVALUATION_PATH,
     post_sft_path: str | Path = DEFAULT_SFT_EVALUATION_PATH,
     output_path: str | Path = DEFAULT_SFT_REPORT_PATH,
+    suite_result_path: str | Path | None = DEFAULT_EVAL_SUITE_PATH,
 ) -> Path:
     """Load SFT artifacts and write the comparison report."""
 
     training_summary = _load_json_object(Path(summary_path), "training summary")
     pre_sft = _load_json_object(Path(pre_sft_path), "pre-SFT evaluation")
     post_sft = _load_json_object(Path(post_sft_path), "post-SFT evaluation")
+    suite_path = Path(suite_result_path) if suite_result_path is not None else None
+    suite_metrics = (
+        load_suite_metrics(suite_path) if suite_path is not None and suite_path.exists() else None
+    )
     report_path = Path(output_path)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(
-        render_sft_report(training_summary, pre_sft, post_sft),
+        render_sft_report(training_summary, pre_sft, post_sft, suite_metrics),
         encoding="utf-8",
         newline="\n",
     )

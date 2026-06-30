@@ -263,3 +263,40 @@ Training writes `artifacts/evals/dpo_training_summary.json`. Evaluation writes
 the DPO metric/generation artifacts and creates `reports/dpo_report.md`, comparing
 the base model, optional SFT model, and DPO model with settings, loss, and latency.
 Tests mock TRL training and model loading, so no test downloads or trains a model.
+
+## Milestone 7
+
+Milestone 7 adds a deterministic, reference-backed evaluation suite that does not
+use an external model, API, or judge. Evaluation examples specify required facts,
+forbidden terms, task type, and metadata alongside the instruction and reference.
+
+Run the suite on saved model generations:
+
+```bash
+python -m llm_posttraining_ops.cli run-eval-suite \
+  --generations-path artifacts/evals/generations/sshleifer_tiny-gpt2.jsonl \
+  --eval-data-path tests/fixtures/eval_suite_sample.jsonl
+```
+
+The suite measures exact match, token F1, required-fact coverage, forbidden-term
+violations, instruction copying, empty/refusal rates, response lengths, and
+JSON/list/short-answer format compliance. It also flags unsupported capitalized
+entities, numeric mismatches, and simple contradiction signals.
+
+Compare two aligned generation files:
+
+```bash
+python -m llm_posttraining_ops.cli compare-generations \
+  --left-path tests/fixtures/generations_bad.jsonl \
+  --right-path tests/fixtures/generations_good.jsonl \
+  --eval-data-path tests/fixtures/eval_suite_sample.jsonl
+```
+
+Pairwise decisions use a fixed order: forbidden terms, required facts, instruction
+copying, length sanity, format compliance, refusal/hallucination checks, token F1,
+and exact match. Equal signals produce a tie.
+
+JSON results are written under `artifacts/evals/`. Markdown reports are generated
+at `reports/eval_suite_report.md` and
+`reports/pairwise_comparison_report.md`. When present, rigorous-suite metrics can
+also be included in regenerated baseline, SFT, and DPO reports.

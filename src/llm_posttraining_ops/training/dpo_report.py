@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Any
 
 from llm_posttraining_ops.inference.evaluation import DEFAULT_MODEL_EVALUATION_PATH
+from llm_posttraining_ops.evaluation.suite import DEFAULT_EVAL_SUITE_PATH
+from llm_posttraining_ops.evaluation.suite_reports import compact_suite_section, load_suite_metrics
 from llm_posttraining_ops.training.dpo import DEFAULT_DPO_SUMMARY_PATH
 from llm_posttraining_ops.training.dpo_evaluation import DEFAULT_DPO_EVALUATION_PATH
 from llm_posttraining_ops.training.evaluation import DEFAULT_SFT_EVALUATION_PATH
@@ -62,6 +64,7 @@ def render_dpo_report(
     base_evaluation: dict[str, Any],
     dpo_evaluation: dict[str, Any],
     sft_evaluation: dict[str, Any] | None = None,
+    suite_metrics: dict[str, Any] | None = None,
 ) -> str:
     """Render base/SFT/DPO metrics, settings, loss, and latency."""
 
@@ -112,6 +115,8 @@ def render_dpo_report(
     if sft_evaluation is not None:
         lines.append(_latency_row("SFT", sft_evaluation))
     lines.extend([_latency_row("DPO", dpo_evaluation), ""])
+    if suite_metrics is not None:
+        lines.extend(compact_suite_section(suite_metrics))
     return "\n".join(lines)
 
 
@@ -122,6 +127,7 @@ def generate_dpo_report(
     sft_evaluation_path: str | Path | None = DEFAULT_SFT_EVALUATION_PATH,
     dpo_evaluation_path: str | Path = DEFAULT_DPO_EVALUATION_PATH,
     output_path: str | Path = DEFAULT_DPO_REPORT_PATH,
+    suite_result_path: str | Path | None = DEFAULT_EVAL_SUITE_PATH,
 ) -> Path:
     """Load DPO artifacts and write the comparison report."""
 
@@ -130,10 +136,14 @@ def generate_dpo_report(
     dpo = _load_json(Path(dpo_evaluation_path), "DPO model evaluation")
     sft_path = Path(sft_evaluation_path) if sft_evaluation_path is not None else None
     sft = _load_json(sft_path, "SFT model evaluation") if sft_path and sft_path.exists() else None
+    suite_path = Path(suite_result_path) if suite_result_path is not None else None
+    suite_metrics = (
+        load_suite_metrics(suite_path) if suite_path is not None and suite_path.exists() else None
+    )
     report_path = Path(output_path)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(
-        render_dpo_report(summary, base, dpo, sft),
+        render_dpo_report(summary, base, dpo, sft, suite_metrics),
         encoding="utf-8",
         newline="\n",
     )

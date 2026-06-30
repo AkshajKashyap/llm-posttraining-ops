@@ -37,10 +37,27 @@ from llm_posttraining_ops.evaluation.evaluator import (
     DEFAULT_EVALUATION_PATH,
     run_baseline_evaluation,
 )
+from llm_posttraining_ops.evaluation.pairwise import (
+    DEFAULT_PAIRWISE_PATH,
+    compare_generation_files,
+    write_pairwise_result,
+)
 from llm_posttraining_ops.evaluation.report import (
     DEFAULT_REPORT_PATH,
     ReportError,
     generate_baseline_report,
+)
+from llm_posttraining_ops.evaluation.suite import (
+    DEFAULT_EVAL_SUITE_PATH,
+    EvalSuiteError,
+    evaluate_generation_file,
+    write_eval_suite_result,
+)
+from llm_posttraining_ops.evaluation.suite_reports import (
+    DEFAULT_EVAL_SUITE_REPORT_PATH,
+    DEFAULT_PAIRWISE_REPORT_PATH,
+    write_eval_suite_report,
+    write_pairwise_report,
 )
 from llm_posttraining_ops.inference.config import (
     DEFAULT_MODEL_NAME,
@@ -348,6 +365,97 @@ def run_baseline_eval_command(
         f"{len(result.baselines)} baselines"
     )
     typer.echo(f"Wrote evaluation results to {output}")
+
+
+@app.command("run-eval-suite")
+def run_eval_suite_command(
+    generations_path: Annotated[
+        Path,
+        typer.Option(
+            "--generations-path",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+        ),
+    ],
+    eval_data_path: Annotated[
+        Path,
+        typer.Option(
+            "--eval-data-path",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+        ),
+    ],
+    output: Annotated[
+        Path,
+        typer.Option("--output", dir_okay=False),
+    ] = DEFAULT_EVAL_SUITE_PATH,
+    report_output: Annotated[
+        Path,
+        typer.Option("--report-output", dir_okay=False),
+    ] = DEFAULT_EVAL_SUITE_REPORT_PATH,
+) -> None:
+    """Run deterministic reference-backed evaluation on saved generations."""
+
+    try:
+        result = evaluate_generation_file(generations_path, eval_data_path)
+        result_path = write_eval_suite_result(result, output)
+        report_path = write_eval_suite_report(result, report_output)
+    except (EvalSuiteError, JsonlError, OSError, ValueError) as exc:
+        typer.echo(f"Evaluation suite failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(f"Evaluated {result.record_count} generation records")
+    typer.echo(f"Wrote evaluation suite results to {result_path}")
+    typer.echo(f"Wrote evaluation suite report to {report_path}")
+
+
+@app.command("compare-generations")
+def compare_generations_command(
+    left_path: Annotated[
+        Path,
+        typer.Option("--left-path", exists=True, dir_okay=False, readable=True),
+    ],
+    right_path: Annotated[
+        Path,
+        typer.Option("--right-path", exists=True, dir_okay=False, readable=True),
+    ],
+    eval_data_path: Annotated[
+        Path,
+        typer.Option(
+            "--eval-data-path",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+        ),
+    ],
+    output: Annotated[
+        Path,
+        typer.Option("--output", dir_okay=False),
+    ] = DEFAULT_PAIRWISE_PATH,
+    report_output: Annotated[
+        Path,
+        typer.Option("--report-output", dir_okay=False),
+    ] = DEFAULT_PAIRWISE_REPORT_PATH,
+) -> None:
+    """Compare two aligned generation files deterministically."""
+
+    try:
+        result = compare_generation_files(left_path, right_path, eval_data_path)
+        result_path = write_pairwise_result(result, output)
+        report_path = write_pairwise_report(result, report_output)
+    except (EvalSuiteError, JsonlError, OSError, ValueError) as exc:
+        typer.echo(f"Pairwise comparison failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(
+        f"Compared {result.record_count} records: "
+        f"left={result.counts.left_wins}, right={result.counts.right_wins}, "
+        f"ties={result.counts.ties}"
+    )
+    typer.echo(f"Wrote pairwise results to {result_path}")
+    typer.echo(f"Wrote pairwise report to {report_path}")
 
 
 @app.command("run-model-eval")
@@ -821,6 +929,9 @@ def generate_baseline_report_command(
             output,
             model_evaluation_path=(
                 model_evaluation_path if model_evaluation_path.exists() else None
+            ),
+            suite_result_path=(
+                DEFAULT_EVAL_SUITE_PATH if DEFAULT_EVAL_SUITE_PATH.exists() else None
             ),
         )
     except (ReportError, OSError) as exc:
