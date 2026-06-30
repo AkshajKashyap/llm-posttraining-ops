@@ -15,7 +15,16 @@ DatasetKind: TypeAlias = Literal["sft", "preference"]
 
 REQUIRED_FIELDS: dict[DatasetKind, tuple[str, ...]] = {
     "sft": ("id", "split", "instruction", "input", "output", "source", "metadata"),
-    "preference": ("id", "split", "instruction", "input", "chosen", "rejected"),
+    "preference": (
+        "id",
+        "split",
+        "instruction",
+        "input",
+        "chosen",
+        "rejected",
+        "source",
+        "metadata",
+    ),
 }
 
 
@@ -88,10 +97,47 @@ def validate_records(
                 ):
                     issues.append(f"{location}: output copies the instruction")
         else:
-            for field in REQUIRED_FIELDS[kind]:
+            for field in ("id", "split", "instruction", "chosen", "rejected", "source"):
                 value = record.get(field)
                 if not isinstance(value, str) or not value.strip():
                     issues.append(f"{location}: field '{field}' must be a non-empty string")
+            input_text = record.get("input")
+            if not isinstance(input_text, str):
+                issues.append(f"{location}: field 'input' must be a string")
+            if not isinstance(record.get("metadata"), Mapping):
+                issues.append(f"{location}: field 'metadata' must be an object")
+
+            instruction = record.get("instruction")
+            chosen = record.get("chosen")
+            rejected = record.get("rejected")
+            if (
+                isinstance(chosen, str)
+                and chosen.strip()
+                and isinstance(rejected, str)
+                and rejected.strip()
+            ):
+                if " ".join(chosen.casefold().split()) == " ".join(
+                    rejected.casefold().split()
+                ):
+                    issues.append(f"{location}: chosen and rejected responses are identical")
+                for field, response in (("chosen", chosen), ("rejected", rejected)):
+                    if len(response.strip()) < minimum_output_length:
+                        issues.append(
+                            f"{location}: {field} is shorter than minimum length "
+                            f"{minimum_output_length}"
+                        )
+                    if _is_suspiciously_repetitive(response):
+                        issues.append(f"{location}: {field} is suspiciously repetitive")
+                    copied_values = [
+                        value
+                        for value in (instruction, input_text)
+                        if isinstance(value, str) and value.strip()
+                    ]
+                    if any(
+                        _normalized_tokens(response) == _normalized_tokens(value)
+                        for value in copied_values
+                    ):
+                        issues.append(f"{location}: {field} copies the prompt")
 
         record_id = record.get("id")
         if isinstance(record_id, str) and record_id.strip():
@@ -130,7 +176,7 @@ def validate_data_directory(
                 records,
                 kind,
                 source=str(path),
-                minimum_output_length=minimum_output_length if kind == "sft" else 1,
+                minimum_output_length=minimum_output_length,
             )
         except (JsonlError, DataValidationError) as exc:
             issues.extend(str(exc).splitlines())

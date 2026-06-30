@@ -242,3 +242,111 @@ def test_sft_training_and_evaluation_cli_use_mocks(
     assert "Evaluated 4 records with SFT model" in evaluation_result.output
     assert "0.200s/example" in evaluation_result.output
     assert captured["model_path"] == model_path
+
+
+def test_preference_ingestion_and_profiling_cli(tmp_path: Path) -> None:
+    data_dir = tmp_path / "preferences"
+    profile_path = tmp_path / "preference_profile.json"
+
+    ingestion_result = runner.invoke(
+        app,
+        [
+            "ingest-preference-data",
+            "--input-path",
+            "tests/fixtures/preference_direct_sample.jsonl",
+            "--output-dir",
+            str(data_dir),
+            "--format",
+            "direct",
+        ],
+    )
+    assert ingestion_result.exit_code == 0
+    assert "Ingested 4 preference records" in ingestion_result.output
+
+    profile_result = runner.invoke(
+        app,
+        [
+            "profile-preference-data",
+            "--data-dir",
+            str(data_dir),
+            "--output",
+            str(profile_path),
+        ],
+    )
+    assert profile_result.exit_code == 0
+    assert "Profiled 4 preference records" in profile_result.output
+    assert profile_path.is_file()
+
+
+def test_dpo_training_and_evaluation_cli_use_mocks(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    preference_dir = tmp_path / "preferences"
+    data_dir = tmp_path / "custom"
+    model_path = tmp_path / "dpo-model"
+    preference_dir.mkdir()
+    data_dir.mkdir()
+    model_path.mkdir()
+    captured: dict[str, Any] = {}
+
+    def fake_training(data_dir: Path, config: Any, **kwargs: Any) -> Any:
+        captured["dpo_config"] = config
+        return SimpleNamespace(
+            training_record_count=2,
+            settings=config.to_dict(),
+            checkpoint_path=str(config.output_dir),
+            use_lora=config.use_lora,
+            metrics={"training_loss": 0.69},
+        )
+
+    def fake_evaluation(data_dir: Path, passed_model_path: Path, **kwargs: Any) -> Any:
+        captured["dpo_model_path"] = passed_model_path
+        return SimpleNamespace(
+            dataset=SimpleNamespace(record_count=4),
+            generations_path="dpo-generations.jsonl",
+            latency=SimpleNamespace(
+                total_generation_seconds=0.4,
+                average_seconds_per_example=0.1,
+            ),
+        )
+
+    monkeypatch.setattr("llm_posttraining_ops.cli.run_dpo_training", fake_training)
+    monkeypatch.setattr("llm_posttraining_ops.cli.run_dpo_evaluation", fake_evaluation)
+    monkeypatch.setattr(
+        "llm_posttraining_ops.cli.generate_dpo_report",
+        lambda **kwargs: tmp_path / "dpo_report.md",
+    )
+
+    train_result = runner.invoke(
+        app,
+        [
+            "train-dpo",
+            "--preference-data-dir",
+            str(preference_dir),
+            "--model-name",
+            "mock/model",
+            "--max-steps",
+            "1",
+            "--use-lora",
+        ],
+    )
+    assert train_result.exit_code == 0
+    assert "Trained 2 preference records for 1 step(s)" in train_result.output
+    assert "Saved adapter" in train_result.output
+    assert captured["dpo_config"].use_lora is True
+
+    evaluation_result = runner.invoke(
+        app,
+        [
+            "evaluate-dpo",
+            "--data-dir",
+            str(data_dir),
+            "--model-path",
+            str(model_path),
+        ],
+    )
+    assert evaluation_result.exit_code == 0
+    assert "Evaluated 4 records with DPO model" in evaluation_result.output
+    assert "0.100s/example" in evaluation_result.output
+    assert captured["dpo_model_path"] == model_path

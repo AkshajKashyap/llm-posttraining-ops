@@ -29,7 +29,7 @@ class SFTRecord:
 
 @dataclass(frozen=True, slots=True)
 class PreferenceRecord:
-    """An instruction paired with preferred and rejected responses."""
+    """A normalized instruction with preferred and rejected responses."""
 
     id: str
     split: SplitName
@@ -37,8 +37,10 @@ class PreferenceRecord:
     input: str
     chosen: str
     rejected: str
+    source: str = "unknown"
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable representation."""
 
         return asdict(self)

@@ -214,3 +214,52 @@ python -m llm_posttraining_ops.cli evaluate-sft \
 `artifacts/evals/generations/sft.jsonl`, and generates `reports/sft_report.md`
 with pre/post metrics, settings, training loss, and latency. Tests mock training
 and model loading, so they remain CPU-only and download-free.
+
+## Milestone 6
+
+Milestone 6 adds local preference-data ingestion and direct preference
+optimization with TRL. Normalized preference records contain `instruction`,
+optional `input`, `chosen`, `rejected`, split/provenance fields, and metadata.
+
+Ingest direct chosen/rejected JSONL and profile it:
+
+```bash
+python -m llm_posttraining_ops.cli ingest-preference-data \
+  --input-path tests/fixtures/preference_direct_sample.jsonl \
+  --output-dir data/processed/preferences \
+  --format direct
+
+python -m llm_posttraining_ops.cli profile-preference-data \
+  --data-dir data/processed/preferences
+```
+
+The `messages` format is also supported for prompt messages plus chosen/rejected
+assistant responses. Validation rejects empty or identical responses, invalid
+splits, duplicate IDs, short/repetitive responses, and responses that simply copy
+the prompt.
+
+Run a one-step CPU DPO smoke train from the base model:
+
+```bash
+python -m llm_posttraining_ops.cli train-dpo \
+  --preference-data-dir data/processed/preferences \
+  --model-name sshleifer/tiny-gpt2 \
+  --max-steps 1
+```
+
+Pass `--sft-model-path artifacts/models/sft` to start from an SFT checkpoint.
+Use `--use-lora` to save a PEFT adapter under `artifacts/adapters/dpo`; otherwise
+the full model is written under `artifacts/models/dpo`.
+
+Evaluate the trained DPO model:
+
+```bash
+python -m llm_posttraining_ops.cli evaluate-dpo \
+  --data-dir data/processed/custom \
+  --model-path artifacts/models/dpo
+```
+
+Training writes `artifacts/evals/dpo_training_summary.json`. Evaluation writes
+the DPO metric/generation artifacts and creates `reports/dpo_report.md`, comparing
+the base model, optional SFT model, and DPO model with settings, loss, and latency.
+Tests mock TRL training and model loading, so no test downloads or trains a model.

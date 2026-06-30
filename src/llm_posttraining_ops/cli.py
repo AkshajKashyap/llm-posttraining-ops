@@ -15,6 +15,18 @@ from llm_posttraining_ops.data.ingestion import (
 )
 from llm_posttraining_ops.data.jsonl import JsonlError
 from llm_posttraining_ops.data.normalization import NormalizationError, SFTFormat
+from llm_posttraining_ops.data.preference_ingestion import (
+    DEFAULT_PREFERENCE_MIN_LENGTH,
+    ingest_preference_data,
+)
+from llm_posttraining_ops.data.preference_normalization import (
+    PreferenceFormat,
+    PreferenceNormalizationError,
+)
+from llm_posttraining_ops.data.preference_profiling import (
+    DEFAULT_PREFERENCE_PROFILE_PATH,
+    profile_preference_directory,
+)
 from llm_posttraining_ops.data.profiling import (
     DEFAULT_DATASET_CARD_PATH,
     DEFAULT_PROFILE_PATH,
@@ -40,6 +52,22 @@ from llm_posttraining_ops.inference.evaluation import (
     run_model_evaluation,
 )
 from llm_posttraining_ops.inference.huggingface import ModelInferenceError
+from llm_posttraining_ops.training.dpo import (
+    DEFAULT_DPO_SUMMARY_PATH,
+    DPOTrainingError,
+    run_dpo_training,
+)
+from llm_posttraining_ops.training.dpo_config import DPOConfigError, DPOTrainingConfig
+from llm_posttraining_ops.training.dpo_evaluation import (
+    DEFAULT_DPO_EVALUATION_PATH,
+    DEFAULT_DPO_GENERATIONS_PATH,
+    run_dpo_evaluation,
+)
+from llm_posttraining_ops.training.dpo_report import (
+    DEFAULT_DPO_REPORT_PATH,
+    DPOReportError,
+    generate_dpo_report,
+)
 from llm_posttraining_ops.training.config import SFTConfigError, SFTTrainingConfig
 from llm_posttraining_ops.training.evaluation import (
     DEFAULT_SFT_EVALUATION_PATH,
@@ -177,6 +205,52 @@ def ingest_sft_data_command(
     typer.echo(f"Ingested {len(records)} SFT records to {output_path}")
 
 
+@app.command("ingest-preference-data")
+def ingest_preference_data_command(
+    input_path: Annotated[
+        Path,
+        typer.Option(
+            "--input-path",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Local raw preference JSONL.",
+        ),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", file_okay=False),
+    ],
+    format_name: Annotated[
+        PreferenceFormat,
+        typer.Option("--format", help="Preference format: direct or messages."),
+    ],
+    minimum_response_length: Annotated[
+        int,
+        typer.Option("--minimum-response-length", min=1),
+    ] = DEFAULT_PREFERENCE_MIN_LENGTH,
+) -> None:
+    """Normalize and validate a local preference dataset."""
+
+    try:
+        output_path, records = ingest_preference_data(
+            input_path,
+            output_dir,
+            format_name,
+            minimum_response_length=minimum_response_length,
+        )
+    except (
+        DataValidationError,
+        JsonlError,
+        OSError,
+        PreferenceNormalizationError,
+        ValueError,
+    ) as exc:
+        typer.echo(f"Preference ingestion failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"Ingested {len(records)} preference records to {output_path}")
+
+
 @app.command("profile-data")
 def profile_data_command(
     data_dir: Annotated[
@@ -212,6 +286,36 @@ def profile_data_command(
     typer.echo(f"Profiled {profile.record_count} SFT records")
     typer.echo(f"Wrote dataset profile to {profile_path}")
     typer.echo(f"Wrote dataset card to {card_path}")
+
+
+@app.command("profile-preference-data")
+def profile_preference_data_command(
+    data_dir: Annotated[
+        Path,
+        typer.Option(
+            "--data-dir",
+            exists=True,
+            file_okay=False,
+            readable=True,
+        ),
+    ] = Path("data/processed/preferences"),
+    output: Annotated[
+        Path,
+        typer.Option("--output", dir_okay=False),
+    ] = DEFAULT_PREFERENCE_PROFILE_PATH,
+) -> None:
+    """Profile a normalized preference dataset."""
+
+    try:
+        profile, profile_path = profile_preference_directory(
+            data_dir,
+            output_path=output,
+        )
+    except (DataValidationError, JsonlError, OSError, ValueError) as exc:
+        typer.echo(f"Preference profiling failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"Profiled {profile.record_count} preference records")
+    typer.echo(f"Wrote preference profile to {profile_path}")
 
 
 @app.command("run-baseline-eval")
@@ -506,6 +610,178 @@ def evaluate_sft_command(
     typer.echo(f"Wrote SFT generations to {result.generations_path}")
     typer.echo(f"Wrote SFT evaluation to {output}")
     typer.echo(f"Wrote SFT report to {report_path}")
+    typer.echo(
+        f"Generation latency: {result.latency.total_generation_seconds:.3f}s total, "
+        f"{result.latency.average_seconds_per_example:.3f}s/example"
+    )
+
+
+@app.command("train-dpo")
+def train_dpo_command(
+    preference_data_dir: Annotated[
+        Path,
+        typer.Option(
+            "--preference-data-dir",
+            exists=True,
+            file_okay=False,
+            readable=True,
+        ),
+    ] = Path("data/processed/preferences"),
+    model_name: Annotated[str, typer.Option("--model-name")] = DEFAULT_MODEL_NAME,
+    sft_model_path: Annotated[
+        Path | None,
+        typer.Option("--sft-model-path", file_okay=False),
+    ] = None,
+    output_dir: Annotated[
+        Path | None,
+        typer.Option("--output-dir", file_okay=False),
+    ] = None,
+    max_steps: Annotated[int, typer.Option("--max-steps", min=1)] = 1,
+    learning_rate: Annotated[
+        float,
+        typer.Option("--learning-rate", min=0.0),
+    ] = 1e-6,
+    batch_size: Annotated[int, typer.Option("--batch-size", min=1)] = 1,
+    gradient_accumulation_steps: Annotated[
+        int,
+        typer.Option("--gradient-accumulation-steps", min=1),
+    ] = 1,
+    max_seq_length: Annotated[int, typer.Option("--max-seq-length", min=1)] = 128,
+    beta: Annotated[float, typer.Option("--beta", min=0.0)] = 0.1,
+    seed: Annotated[int, typer.Option("--seed", min=0)] = 42,
+    use_lora: Annotated[
+        bool,
+        typer.Option("--use-lora/--no-use-lora"),
+    ] = False,
+    lora_r: Annotated[int, typer.Option("--lora-r", min=1)] = 8,
+    lora_alpha: Annotated[int, typer.Option("--lora-alpha", min=1)] = 16,
+    lora_dropout: Annotated[
+        float,
+        typer.Option("--lora-dropout", min=0.0, max=0.999),
+    ] = 0.05,
+    summary_output: Annotated[
+        Path,
+        typer.Option("--summary-output", dir_okay=False),
+    ] = DEFAULT_DPO_SUMMARY_PATH,
+) -> None:
+    """Run a tiny CPU direct preference optimization job."""
+
+    resolved_output_dir = output_dir or Path(
+        "artifacts/adapters/dpo" if use_lora else "artifacts/models/dpo"
+    )
+    try:
+        config = DPOTrainingConfig(
+            model_name=model_name,
+            sft_model_path=sft_model_path,
+            output_dir=resolved_output_dir,
+            max_steps=max_steps,
+            learning_rate=learning_rate,
+            batch_size=batch_size,
+            gradient_accumulation_steps=gradient_accumulation_steps,
+            max_seq_length=max_seq_length,
+            beta=beta,
+            seed=seed,
+            use_lora=use_lora,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+        )
+        summary = run_dpo_training(
+            preference_data_dir,
+            config,
+            summary_path=summary_output,
+        )
+    except (
+        DPOConfigError,
+        DPOTrainingError,
+        DataValidationError,
+        JsonlError,
+        OSError,
+        SFTCheckpointError,
+        ValueError,
+    ) as exc:
+        typer.echo(f"DPO training failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    loss = summary.metrics.get("training_loss", summary.metrics.get("train_loss"))
+    typer.echo(
+        f"Trained {summary.training_record_count} preference records for "
+        f"{summary.settings['max_steps']} step(s)"
+    )
+    typer.echo(f"Saved {'adapter' if summary.use_lora else 'model'} to {summary.checkpoint_path}")
+    typer.echo(f"Wrote DPO training summary to {summary_output}")
+    if loss is not None:
+        typer.echo(f"DPO loss: {loss:.6f}")
+
+
+@app.command("evaluate-dpo")
+def evaluate_dpo_command(
+    data_dir: Annotated[
+        Path,
+        typer.Option("--data-dir", exists=True, file_okay=False, readable=True),
+    ] = Path("data/processed/custom"),
+    model_path: Annotated[
+        Path,
+        typer.Option(
+            "--model-path",
+            exists=True,
+            file_okay=False,
+            readable=True,
+        ),
+    ] = Path("artifacts/models/dpo"),
+    max_new_tokens: Annotated[int, typer.Option("--max-new-tokens", min=1)] = 32,
+    temperature: Annotated[float, typer.Option("--temperature", min=0.0)] = 0.0,
+    top_p: Annotated[float, typer.Option("--top-p", min=0.0, max=1.0)] = 1.0,
+    seed: Annotated[int, typer.Option("--seed", min=0)] = 42,
+    output: Annotated[
+        Path,
+        typer.Option("--output", dir_okay=False),
+    ] = DEFAULT_DPO_EVALUATION_PATH,
+    generations_output: Annotated[
+        Path,
+        typer.Option("--generations-output", dir_okay=False),
+    ] = DEFAULT_DPO_GENERATIONS_PATH,
+    report_output: Annotated[
+        Path,
+        typer.Option("--report-output", dir_okay=False),
+    ] = DEFAULT_DPO_REPORT_PATH,
+) -> None:
+    """Evaluate a DPO model and generate its comparison report."""
+
+    try:
+        result = run_dpo_evaluation(
+            data_dir,
+            model_path,
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            seed=seed,
+            output_path=output,
+            generations_path=generations_output,
+        )
+        report_path = generate_dpo_report(
+            dpo_evaluation_path=output,
+            output_path=report_output,
+        )
+    except (
+        DPOReportError,
+        DataValidationError,
+        GenerationConfigError,
+        JsonlError,
+        ModelInferenceError,
+        OSError,
+        SFTCheckpointError,
+        ValueError,
+    ) as exc:
+        typer.echo(f"DPO evaluation failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(
+        f"Evaluated {result.dataset.record_count} records with DPO model {model_path}"
+    )
+    typer.echo(f"Wrote DPO generations to {result.generations_path}")
+    typer.echo(f"Wrote DPO evaluation to {output}")
+    typer.echo(f"Wrote DPO report to {report_path}")
     typer.echo(
         f"Generation latency: {result.latency.total_generation_seconds:.3f}s total, "
         f"{result.latency.average_seconds_per_example:.3f}s/example"

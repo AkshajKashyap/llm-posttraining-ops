@@ -72,6 +72,8 @@ def generate_preference_records(
                     input=f"What is {value} plus {increment}?",
                     chosen=f"The answer is {answer}.",
                     rejected=f"The answer is {wrong_answer}.",
+                    source="deterministic-demo",
+                    metadata={"generator": "arithmetic-preference-v1", "seed": seed},
                 )
             )
     return records
