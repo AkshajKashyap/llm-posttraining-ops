@@ -40,6 +40,23 @@ from llm_posttraining_ops.inference.evaluation import (
     run_model_evaluation,
 )
 from llm_posttraining_ops.inference.huggingface import ModelInferenceError
+from llm_posttraining_ops.training.config import SFTConfigError, SFTTrainingConfig
+from llm_posttraining_ops.training.evaluation import (
+    DEFAULT_SFT_EVALUATION_PATH,
+    DEFAULT_SFT_GENERATIONS_PATH,
+    SFTCheckpointError,
+    run_sft_evaluation,
+)
+from llm_posttraining_ops.training.report import (
+    DEFAULT_SFT_REPORT_PATH,
+    SFTReportError,
+    generate_sft_report,
+)
+from llm_posttraining_ops.training.sft import (
+    DEFAULT_SFT_SUMMARY_PATH,
+    SFTTrainingError,
+    run_sft_training,
+)
 
 app = typer.Typer(
     no_args_is_help=True,
@@ -306,6 +323,189 @@ def run_model_eval_command(
     )
     typer.echo(f"Wrote model generations to {result.generations_path}")
     typer.echo(f"Wrote model evaluation to {output}")
+    typer.echo(
+        f"Generation latency: {result.latency.total_generation_seconds:.3f}s total, "
+        f"{result.latency.average_seconds_per_example:.3f}s/example"
+    )
+
+
+@app.command("train-sft")
+def train_sft_command(
+    data_dir: Annotated[
+        Path,
+        typer.Option(
+            "--data-dir",
+            exists=True,
+            file_okay=False,
+            readable=True,
+            help="Directory containing normalized sft.jsonl.",
+        ),
+    ] = Path("data/processed/custom"),
+    model_name: Annotated[
+        str,
+        typer.Option("--model-name", help="Base Hugging Face causal LM."),
+    ] = DEFAULT_MODEL_NAME,
+    output_dir: Annotated[
+        Path | None,
+        typer.Option("--output-dir", file_okay=False, help="Model or adapter output."),
+    ] = None,
+    max_steps: Annotated[
+        int,
+        typer.Option("--max-steps", min=1, help="Maximum optimizer steps."),
+    ] = 1,
+    learning_rate: Annotated[
+        float,
+        typer.Option("--learning-rate", min=0.0, help="Optimizer learning rate."),
+    ] = 5e-5,
+    batch_size: Annotated[
+        int,
+        typer.Option("--batch-size", min=1, help="Per-device training batch size."),
+    ] = 1,
+    gradient_accumulation_steps: Annotated[
+        int,
+        typer.Option("--gradient-accumulation-steps", min=1),
+    ] = 1,
+    max_seq_length: Annotated[
+        int,
+        typer.Option("--max-seq-length", min=1),
+    ] = 128,
+    seed: Annotated[int, typer.Option("--seed", min=0)] = 42,
+    use_lora: Annotated[
+        bool,
+        typer.Option("--use-lora/--no-use-lora", help="Train PEFT LoRA adapters."),
+    ] = False,
+    lora_r: Annotated[int, typer.Option("--lora-r", min=1)] = 8,
+    lora_alpha: Annotated[int, typer.Option("--lora-alpha", min=1)] = 16,
+    lora_dropout: Annotated[
+        float,
+        typer.Option("--lora-dropout", min=0.0, max=0.999),
+    ] = 0.05,
+    summary_output: Annotated[
+        Path,
+        typer.Option("--summary-output", dir_okay=False),
+    ] = DEFAULT_SFT_SUMMARY_PATH,
+) -> None:
+    """Run a small CPU supervised fine-tuning job."""
+
+    resolved_output_dir = output_dir or Path(
+        "artifacts/adapters/sft" if use_lora else "artifacts/models/sft"
+    )
+    try:
+        config = SFTTrainingConfig(
+            model_name=model_name,
+            output_dir=resolved_output_dir,
+            max_steps=max_steps,
+            learning_rate=learning_rate,
+            batch_size=batch_size,
+            gradient_accumulation_steps=gradient_accumulation_steps,
+            max_seq_length=max_seq_length,
+            seed=seed,
+            use_lora=use_lora,
+            lora_r=lora_r,
+            lora_alpha=lora_alpha,
+            lora_dropout=lora_dropout,
+        )
+        summary = run_sft_training(
+            data_dir,
+            config,
+            summary_path=summary_output,
+        )
+    except (
+        DataValidationError,
+        JsonlError,
+        OSError,
+        SFTConfigError,
+        SFTTrainingError,
+        ValueError,
+    ) as exc:
+        typer.echo(f"SFT training failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    loss = summary.metrics.get("training_loss", summary.metrics.get("train_loss"))
+    typer.echo(
+        f"Trained {summary.training_record_count} records for "
+        f"{summary.settings['max_steps']} step(s)"
+    )
+    typer.echo(f"Saved {'adapter' if summary.use_lora else 'model'} to {summary.checkpoint_path}")
+    typer.echo(f"Wrote training summary to {summary_output}")
+    if loss is not None:
+        typer.echo(f"Training loss: {loss:.6f}")
+
+
+@app.command("evaluate-sft")
+def evaluate_sft_command(
+    data_dir: Annotated[
+        Path,
+        typer.Option(
+            "--data-dir",
+            exists=True,
+            file_okay=False,
+            readable=True,
+        ),
+    ] = Path("data/processed/custom"),
+    model_path: Annotated[
+        Path,
+        typer.Option(
+            "--model-path",
+            exists=True,
+            file_okay=False,
+            readable=True,
+            help="Saved full model or PEFT adapter directory.",
+        ),
+    ] = Path("artifacts/models/sft"),
+    max_new_tokens: Annotated[int, typer.Option("--max-new-tokens", min=1)] = 32,
+    temperature: Annotated[float, typer.Option("--temperature", min=0.0)] = 0.0,
+    top_p: Annotated[float, typer.Option("--top-p", min=0.0, max=1.0)] = 1.0,
+    seed: Annotated[int, typer.Option("--seed", min=0)] = 42,
+    output: Annotated[
+        Path,
+        typer.Option("--output", dir_okay=False),
+    ] = DEFAULT_SFT_EVALUATION_PATH,
+    generations_output: Annotated[
+        Path,
+        typer.Option("--generations-output", dir_okay=False),
+    ] = DEFAULT_SFT_GENERATIONS_PATH,
+    report_output: Annotated[
+        Path,
+        typer.Option("--report-output", dir_okay=False),
+    ] = DEFAULT_SFT_REPORT_PATH,
+) -> None:
+    """Evaluate a trained SFT model and generate its comparison report."""
+
+    try:
+        result = run_sft_evaluation(
+            data_dir,
+            model_path,
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            top_p=top_p,
+            seed=seed,
+            output_path=output,
+            generations_path=generations_output,
+        )
+        report_path = generate_sft_report(
+            post_sft_path=output,
+            output_path=report_output,
+        )
+    except (
+        DataValidationError,
+        GenerationConfigError,
+        JsonlError,
+        ModelInferenceError,
+        OSError,
+        SFTCheckpointError,
+        SFTReportError,
+        ValueError,
+    ) as exc:
+        typer.echo(f"SFT evaluation failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(
+        f"Evaluated {result.dataset.record_count} records with SFT model {model_path}"
+    )
+    typer.echo(f"Wrote SFT generations to {result.generations_path}")
+    typer.echo(f"Wrote SFT evaluation to {output}")
+    typer.echo(f"Wrote SFT report to {report_path}")
     typer.echo(
         f"Generation latency: {result.latency.total_generation_seconds:.3f}s total, "
         f"{result.latency.average_seconds_per_example:.3f}s/example"

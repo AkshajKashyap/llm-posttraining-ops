@@ -5,6 +5,8 @@ description = "End-to-end LLM fine-tuning and evaluation system with SFT, prefer
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
+    "accelerate>=1.0",
+    "peft>=0.13,<1",
     "pyyaml>=6.0",
     "torch>=2.1",
     "transformers>=4.40,<5",

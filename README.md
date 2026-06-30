@@ -158,3 +158,59 @@ python -m llm_posttraining_ops.cli generate-baseline-report
 When `model_eval.json` is present, the report compares the Hugging Face model with
 the echo, template, and keyword/rule baselines and includes a model latency section.
 No fine-tuning is performed.
+
+## Milestone 5
+
+Milestone 5 adds supervised fine-tuning for causal language models. SFT reuses the
+normalized instruction schema and the inference prompt template. Prompt and padding
+tokens receive label `-100`, so training loss is computed on expected response
+tokens.
+
+Run a one-step CPU smoke fine-tune:
+
+```bash
+python -m llm_posttraining_ops.cli train-sft \
+  --data-dir data/processed/custom \
+  --model-name sshleifer/tiny-gpt2 \
+  --max-steps 1
+```
+
+The default full-model checkpoint is written to `artifacts/models/sft`, and the
+training summary is written to `artifacts/evals/sft_training_summary.json`.
+Training defaults are intentionally small:
+
+```text
+--max-steps 1
+--learning-rate 0.00005
+--batch-size 1
+--gradient-accumulation-steps 1
+--max-seq-length 128
+--seed 42
+```
+
+LoRA is supported through PEFT:
+
+```bash
+python -m llm_posttraining_ops.cli train-sft \
+  --data-dir data/processed/custom \
+  --model-name sshleifer/tiny-gpt2 \
+  --max-steps 1 \
+  --use-lora
+```
+
+Without an explicit `--output-dir`, LoRA adapters are saved under
+`artifacts/adapters/sft`.
+
+Evaluate the trained full model:
+
+```bash
+python -m llm_posttraining_ops.cli evaluate-sft \
+  --data-dir data/processed/custom \
+  --model-path artifacts/models/sft
+```
+
+`evaluate-sft` accepts either a full checkpoint or PEFT adapter. It writes
+`artifacts/evals/sft_model_eval.json`, saves generations under
+`artifacts/evals/generations/sft.jsonl`, and generates `reports/sft_report.md`
+with pre/post metrics, settings, training loss, and latency. Tests mock training
+and model loading, so they remain CPU-only and download-free.
