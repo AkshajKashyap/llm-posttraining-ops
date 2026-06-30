@@ -429,3 +429,47 @@ def test_serve_cli_smoke_uses_mock_app(
     assert captured["port"] == 8123
     assert captured["api"].state.model_manager.mock is True
     assert captured["api"].state.model_manager.loaded is False
+
+
+def test_monitoring_and_release_gate_cli(tmp_path: Path) -> None:
+    monitoring_output = tmp_path / "monitoring.json"
+    monitoring_report = tmp_path / "monitoring.md"
+    monitoring_result = runner.invoke(
+        app,
+        [
+            "monitor-logs",
+            "--logs-path",
+            "tests/fixtures/inference_logs_sample.jsonl",
+            "--output",
+            str(monitoring_output),
+            "--report-output",
+            str(monitoring_report),
+        ],
+    )
+
+    assert monitoring_result.exit_code == 0
+    assert "Monitoring status: pass (5 requests" in monitoring_result.output
+    assert monitoring_output.is_file()
+    assert monitoring_report.is_file()
+
+    gate_output = tmp_path / "gate.json"
+    gate_report = tmp_path / "gate.md"
+    gate_result = runner.invoke(
+        app,
+        [
+            "run-release-gate",
+            "--baseline-eval",
+            "tests/fixtures/baseline_eval_gate_sample.json",
+            "--current-eval",
+            "tests/fixtures/current_eval_gate_sample.json",
+            "--output",
+            str(gate_output),
+            "--report-output",
+            str(gate_report),
+        ],
+    )
+
+    assert gate_result.exit_code == 0
+    assert "Release gate: pass (4/4 checks passed)" in gate_result.output
+    assert gate_output.is_file()
+    assert gate_report.is_file()

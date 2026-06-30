@@ -352,3 +352,54 @@ Inference events are appended to `artifacts/logs/inference_logs.jsonl`. Each eve
 contains a request ID, UTC timestamp, endpoint, model, mock flag, prompt and caller
 metadata, generation settings, latency, token/character response lengths, status,
 and any error. Generated logs remain ignored by Git.
+
+## Milestone 9
+
+Milestone 9 turns inference logs and rigorous evaluation artifacts into
+deterministic operational checks. It calculates request volume, errors, latency
+percentiles, response health, mock/real traffic, and endpoint/model routing.
+
+Monitor the default service log:
+
+```bash
+python -m llm_posttraining_ops.cli monitor-logs \
+  --logs-path artifacts/logs/inference_logs.jsonl
+```
+
+Run the deterministic fixture:
+
+```bash
+python -m llm_posttraining_ops.cli monitor-logs \
+  --logs-path tests/fixtures/inference_logs_sample.jsonl
+```
+
+Thresholds are configurable:
+
+```bash
+python -m llm_posttraining_ops.cli monitor-logs \
+  --logs-path artifacts/logs/inference_logs.jsonl \
+  --max-error-rate 0.05 \
+  --max-p95-latency 5.0 \
+  --min-average-response-length 1 \
+  --max-empty-response-rate 0.05
+```
+
+A breached threshold produces `fail`. Values at 80% of a maximum limit, or
+within 20% of a minimum requirement, produce `warn`; otherwise monitoring
+passes. Results are saved to `artifacts/evals/monitoring_summary.json` and
+`reports/monitoring_report.md`.
+
+Gate a candidate evaluation against a baseline:
+
+```bash
+python -m llm_posttraining_ops.cli run-release-gate \
+  --baseline-eval tests/fixtures/baseline_eval_gate_sample.json \
+  --current-eval tests/fixtures/current_eval_gate_sample.json
+```
+
+The gate fails if required-fact coverage drops, forbidden-term violations rise,
+empty responses rise, or current p95 latency exceeds `--max-p95-latency` when
+that metric is present. The JSON decision is written to
+`artifacts/evals/release_gate.json`, with an auditable Markdown report at
+`reports/release_gate_report.md`. Failed monitoring and release gates return a
+non-zero CLI exit code for CI use.

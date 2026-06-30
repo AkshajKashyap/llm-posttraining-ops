@@ -69,6 +69,23 @@ from llm_posttraining_ops.inference.evaluation import (
     run_model_evaluation,
 )
 from llm_posttraining_ops.inference.huggingface import ModelInferenceError
+from llm_posttraining_ops.monitoring.logs import MonitoringError
+from llm_posttraining_ops.monitoring.metrics import (
+    DEFAULT_MONITORING_SUMMARY_PATH,
+    MonitoringThresholds,
+    monitor_inference_logs,
+)
+from llm_posttraining_ops.monitoring.release_gate import (
+    DEFAULT_MAX_RELEASE_P95_LATENCY,
+    DEFAULT_RELEASE_GATE_PATH,
+    run_release_gate,
+)
+from llm_posttraining_ops.monitoring.reports import (
+    DEFAULT_MONITORING_REPORT_PATH,
+    DEFAULT_RELEASE_GATE_REPORT_PATH,
+    write_monitoring_report,
+    write_release_gate_report,
+)
 from llm_posttraining_ops.serving.logging import DEFAULT_INFERENCE_LOG_PATH
 from llm_posttraining_ops.training.dpo import (
     DEFAULT_DPO_SUMMARY_PATH,
@@ -930,6 +947,129 @@ def serve_command(
     except (ImportError, OSError, ValueError) as exc:
         typer.echo(f"Serving failed: {exc}", err=True)
         raise typer.Exit(code=1) from exc
+
+
+@app.command("monitor-logs")
+def monitor_logs_command(
+    logs_path: Annotated[
+        Path,
+        typer.Option(
+            "--logs-path",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Structured inference JSONL log.",
+        ),
+    ] = DEFAULT_INFERENCE_LOG_PATH,
+    max_error_rate: Annotated[
+        float,
+        typer.Option("--max-error-rate", min=0.0, max=1.0),
+    ] = 0.05,
+    max_p95_latency: Annotated[
+        float,
+        typer.Option("--max-p95-latency", min=0.0),
+    ] = 5.0,
+    min_average_response_length: Annotated[
+        float,
+        typer.Option("--min-average-response-length", min=0.0),
+    ] = 1.0,
+    max_empty_response_rate: Annotated[
+        float,
+        typer.Option("--max-empty-response-rate", min=0.0, max=1.0),
+    ] = 0.05,
+    output: Annotated[
+        Path,
+        typer.Option("--output", dir_okay=False),
+    ] = DEFAULT_MONITORING_SUMMARY_PATH,
+    report_output: Annotated[
+        Path,
+        typer.Option("--report-output", dir_okay=False),
+    ] = DEFAULT_MONITORING_REPORT_PATH,
+) -> None:
+    """Summarize inference health and apply operational thresholds."""
+
+    try:
+        result = monitor_inference_logs(
+            logs_path,
+            thresholds=MonitoringThresholds(
+                max_error_rate=max_error_rate,
+                max_p95_latency=max_p95_latency,
+                min_average_response_length=min_average_response_length,
+                max_empty_response_rate=max_empty_response_rate,
+            ),
+            output_path=output,
+        )
+        report_path = write_monitoring_report(result, report_output)
+    except (MonitoringError, OSError, ValueError) as exc:
+        typer.echo(f"Monitoring failed: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    typer.echo(
+        f"Monitoring status: {result.status} "
+        f"({result.metrics.request_count} requests, "
+        f"{result.metrics.error_rate:.3f} error rate)"
+    )
+    typer.echo(f"Wrote monitoring summary to {output}")
+    typer.echo(f"Wrote monitoring report to {report_path}")
+    if result.status == "fail":
+        raise typer.Exit(code=1)
+
+
+@app.command("run-release-gate")
+def run_release_gate_command(
+    baseline_eval: Annotated[
+        Path,
+        typer.Option(
+            "--baseline-eval",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+        ),
+    ],
+    current_eval: Annotated[
+        Path,
+        typer.Option(
+            "--current-eval",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+        ),
+    ],
+    max_p95_latency: Annotated[
+        float,
+        typer.Option("--max-p95-latency", min=0.0),
+    ] = DEFAULT_MAX_RELEASE_P95_LATENCY,
+    output: Annotated[
+        Path,
+        typer.Option("--output", dir_okay=False),
+    ] = DEFAULT_RELEASE_GATE_PATH,
+    report_output: Annotated[
+        Path,
+        typer.Option("--report-output", dir_okay=False),
+    ] = DEFAULT_RELEASE_GATE_REPORT_PATH,
+) -> None:
+    """Gate a model release on eval regressions and optional p95 latency."""
+
+    try:
+        result = run_release_gate(
+            baseline_eval,
+            current_eval,
+            max_p95_latency_seconds=max_p95_latency,
+            output_path=output,
+        )
+        report_path = write_release_gate_report(result, report_output)
+    except (MonitoringError, OSError, ValueError) as exc:
+        typer.echo(f"Release gate failed to run: {exc}", err=True)
+        raise typer.Exit(code=1) from exc
+
+    passed = sum(check.passed for check in result.checks)
+    typer.echo(
+        f"Release gate: {result.status} ({passed}/{len(result.checks)} checks passed)"
+    )
+    typer.echo(f"Wrote release gate result to {output}")
+    typer.echo(f"Wrote release gate report to {report_path}")
+    if result.status == "fail":
+        raise typer.Exit(code=1)
 
 
 @app.command("generate-baseline-report")

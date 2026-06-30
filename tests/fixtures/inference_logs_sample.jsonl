@@ -1,0 +1,5 @@
+{"endpoint":"/generate","error":null,"latency_seconds":0.1,"mock":true,"model_name":"mock/model","request_id":"req-001","response_length_tokens":8,"status":"ok","timestamp":"2026-06-30T10:00:00+00:00"}
+{"endpoint":"/generate","error":null,"latency_seconds":0.2,"mock":true,"model_name":"mock/model","request_id":"req-002","response_length_tokens":10,"status":"ok","timestamp":"2026-06-30T10:00:01+00:00"}
+{"endpoint":"/batch-generate","error":null,"latency_seconds":0.3,"mock":false,"model_name":"local/sft","request_id":"req-003","response_length_tokens":12,"status":"ok","timestamp":"2026-06-30T10:00:02+00:00"}
+{"endpoint":"/evaluate-generation","error":null,"latency_seconds":0.4,"mock":false,"model_name":"local/sft","request_id":"req-004","response_length_tokens":6,"status":"ok","timestamp":"2026-06-30T10:00:03+00:00"}
+{"endpoint":"/generate","error":null,"latency_seconds":0.5,"mock":true,"model_name":"mock/model","request_id":"req-005","response_length_tokens":4,"status":"ok","timestamp":"2026-06-30T10:00:04+00:00"}

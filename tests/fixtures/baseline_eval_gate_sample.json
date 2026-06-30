@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "metrics": {
+    "required_fact_coverage": 0.75,
+    "forbidden_term_violation_rate": 0.25,
+    "empty_response_rate": 0.1
+  },
+  "latency": {
+    "p95_seconds": 0.8
+  }
+}
