@@ -5,31 +5,26 @@ description = "End-to-end LLM fine-tuning and evaluation system with SFT, prefer
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-    "torch",
-    "transformers",
-    "datasets",
-    "accelerate",
-    "peft",
-    "trl",
-    "evaluate",
-    "scikit-learn",
-    "pandas",
-    "numpy",
-    "fastapi",
-    "uvicorn",
-    "pydantic",
-    "typer",
-    "rich",
+    "pyyaml>=6.0",
+    "typer>=0.12",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest",
-    "ruff",
+    "pytest>=8.0",
+    "ruff>=0.5",
 ]
+
+[project.scripts]
+llm-posttraining-ops = "llm_posttraining_ops.cli:app"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
 
 [tool.ruff]
 line-length = 100
+target-version = "py311"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

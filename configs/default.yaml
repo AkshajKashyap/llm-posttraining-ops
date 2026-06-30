@@ -1,0 +1,11 @@
+seed: 42
+data:
+  output_dir: data/processed/demo
+  sft_split_sizes:
+    train: 8
+    validation: 2
+    test: 2
+  preference_split_sizes:
+    train: 8
+    validation: 2
+    test: 2

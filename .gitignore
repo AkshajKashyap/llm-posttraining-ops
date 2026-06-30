@@ -1,10 +1,13 @@
 .venv/
+*.egg-info/
 __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
 data/raw/
-data/processed/
+data/processed/*
+!data/processed/demo/
+!data/processed/demo/*.jsonl
 artifacts/
 *.pt
 *.pth

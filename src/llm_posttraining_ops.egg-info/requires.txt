@@ -1,19 +1,6 @@
-torch
-transformers
-datasets
-accelerate
-peft
-trl
-evaluate
-scikit-learn
-pandas
-numpy
-fastapi
-uvicorn
-pydantic
-typer
-rich
+pyyaml>=6.0
+typer>=0.12
 
 [dev]
-pytest
-ruff
+pytest>=8.0
+ruff>=0.5
