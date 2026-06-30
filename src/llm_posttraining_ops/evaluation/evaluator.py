@@ -7,11 +7,10 @@ from collections import Counter
 from collections.abc import Sequence
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
-from llm_posttraining_ops.data.jsonl import read_jsonl
-from llm_posttraining_ops.data.schemas import SFTRecord, SplitName
-from llm_posttraining_ops.data.validation import validate_records
+from llm_posttraining_ops.data.ingestion import load_normalized_sft
+from llm_posttraining_ops.data.schemas import SFTRecord
 from llm_posttraining_ops.evaluation.baselines import (
     DEFAULT_BASELINES,
     BaselineGenerator,
@@ -73,19 +72,7 @@ class EvaluationResult:
 def load_sft_records(path: str | Path) -> list[SFTRecord]:
     """Load and validate SFT records from JSONL."""
 
-    input_path = Path(path)
-    raw_records = read_jsonl(input_path)
-    validate_records(raw_records, "sft", source=str(input_path))
-    return [
-        SFTRecord(
-            id=record["id"],
-            split=cast(SplitName, record["split"]),
-            instruction=record["instruction"],
-            input=record["input"],
-            output=record["output"],
-        )
-        for record in raw_records
-    ]
+    return load_normalized_sft(path)
 
 
 def evaluate_records(

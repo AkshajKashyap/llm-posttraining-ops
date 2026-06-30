@@ -1,0 +1,4 @@
+{"id":"alpaca-001","split":"train","instruction":"Name the capital city of the country in the input.","input":"France","output":"Paris is the capital city of France.","metadata":{"category":"geography"}}
+{"id":"alpaca-002","split":"train","instruction":"Rewrite the sentence to sound more formal.","input":"The meeting starts at noon.","output":"The meeting will commence at twelve o'clock.","metadata":{"category":"rewriting"}}
+{"id":"alpaca-003","split":"validation","instruction":"Give one practical benefit of using public transit.","input":"Focus on city traffic.","output":"A practical benefit is reduced traffic congestion.","metadata":{"category":"reasoning"}}
+{"id":"alpaca-004","split":"test","instruction":"Give one practical benefit of carrying a reusable bottle.","input":"Focus on environmental impact.","output":"A practical benefit is less single-use plastic waste.","metadata":{"category":"reasoning"}}

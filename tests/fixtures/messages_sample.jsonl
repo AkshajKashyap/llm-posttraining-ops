@@ -1,0 +1,2 @@
+{"id":"messages-001","split":"train","messages":[{"role":"system","content":"Answer clearly and briefly."},{"role":"user","content":"Why do leaves often look green?"},{"role":"assistant","content":"Leaves look green because chlorophyll reflects green wavelengths of light."}],"metadata":{"category":"science"}}
+{"id":"messages-002","split":"test","messages":[{"role":"user","content":"Turn this note into a complete sentence: delivery delayed by rain"},{"role":"assistant","content":"The delivery was delayed because of the rain."}],"metadata":{"category":"rewriting"}}

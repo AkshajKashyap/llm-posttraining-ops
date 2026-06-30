@@ -72,3 +72,49 @@ average response length in tokens, and empty response rate. It evaluates every
 demo SFT split and stores both aggregate metrics and per-example outputs. The
 artifact intentionally omits timestamps so identical data produces identical
 results.
+
+## Milestone 3
+
+Milestone 3 adds local instruction-dataset ingestion and a normalized SFT schema:
+`id`, `split`, `instruction`, `input`, `output`, `source`, and `metadata`.
+Supported raw JSONL formats are:
+
+- `alpaca`: records with `instruction`, optional `input`, and `output`.
+- `messages`: records containing user and assistant turns in `messages`.
+
+Ingest the tiny local Alpaca fixture:
+
+```bash
+python -m llm_posttraining_ops.cli ingest-sft-data \
+  --input-path tests/fixtures/alpaca_sample.jsonl \
+  --output-dir data/processed/custom \
+  --format alpaca
+```
+
+Ingestion is deterministic and checks required fields, IDs and splits, output
+length, repetitive responses, and outputs that simply copy their instruction.
+Empty input strings are valid.
+
+Validate and profile the normalized dataset:
+
+```bash
+python -m llm_posttraining_ops.cli validate-data \
+  --data-dir data/processed/custom
+python -m llm_posttraining_ops.cli profile-data \
+  --data-dir data/processed/custom
+```
+
+Profiling writes `artifacts/evals/dataset_profile.json` and
+`reports/dataset_card.md`. The profile includes split/source counts, average
+instruction and output token lengths, empty-input rate, duplicate-output rate,
+and repeated output starting phrases.
+
+The baseline harness accepts the same normalized custom directory:
+
+```bash
+python -m llm_posttraining_ops.cli run-baseline-eval \
+  --data-dir data/processed/custom
+python -m llm_posttraining_ops.cli generate-baseline-report
+```
+
+No command downloads a model or dataset.

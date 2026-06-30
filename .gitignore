@@ -12,6 +12,7 @@ artifacts/*
 !artifacts/evals/
 artifacts/evals/*
 !artifacts/evals/baseline_eval.json
+!artifacts/evals/dataset_profile.json
 *.pt
 *.pth
 *.safetensors

@@ -1,17 +1,17 @@
 # Baseline Evaluation Report
 
-- Dataset: `data/processed/demo/sft.jsonl`
-- Records: 12
-- Splits: test=2, train=8, validation=2
+- Dataset: `data/processed/custom/sft.jsonl`
+- Records: 4
+- Splits: test=1, train=2, validation=1
 - Schema version: 1.0
 
 ## Summary
 
 | Baseline | Exact match | Token overlap F1 | Contains expected key terms | Average response length | Empty response rate |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| echo | 0.000 | 0.000 | 0.000 | 6.000 | 0.000 |
-| template | 0.000 | 0.000 | 0.000 | 11.000 | 0.000 |
-| keyword_rule | 1.000 | 1.000 | 1.000 | 1.000 | 0.000 |
+| echo | 0.000 | 0.223 | 0.000 | 3.500 | 0.000 |
+| template | 0.000 | 0.192 | 0.000 | 8.500 | 0.000 |
+| keyword_rule | 0.000 | 0.000 | 0.000 | 5.000 | 0.000 |
 
 ## Metric definitions
 

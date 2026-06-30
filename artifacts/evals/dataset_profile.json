@@ -1,0 +1,25 @@
+{
+  "dataset_path": "data/processed/custom/sft.jsonl",
+  "metrics": {
+    "average_instruction_length": 8.5,
+    "average_output_length": 7.75,
+    "duplicate_output_rate": 0.0,
+    "empty_input_rate": 0.0,
+    "top_repeated_starting_phrases": [
+      {
+        "count": 2,
+        "phrase": "a practical benefit"
+      }
+    ]
+  },
+  "record_count": 4,
+  "schema_version": "1.0",
+  "source_counts": {
+    "alpaca_sample": 4
+  },
+  "split_counts": {
+    "test": 1,
+    "train": 2,
+    "validation": 1
+  }
+}

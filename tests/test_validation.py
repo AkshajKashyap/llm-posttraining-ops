@@ -26,6 +26,24 @@ def test_validation_succeeds_for_prepared_data(tmp_path: Path) -> None:
     assert validate_data_directory(tmp_path) == {"sft": 4, "preference": 4}
 
 
+def test_normalized_sft_validation_allows_empty_input() -> None:
+    validate_records(
+        [
+            {
+                "id": "one",
+                "split": "train",
+                "instruction": "Explain the term briefly.",
+                "input": "",
+                "output": "A concise and useful explanation.",
+                "source": "test",
+                "metadata": {},
+            }
+        ],
+        "sft",
+        minimum_output_length=10,
+    )
+
+
 @pytest.mark.parametrize(
     ("records", "message"),
     [
@@ -83,3 +101,35 @@ def test_validation_reports_invalid_records(
 ) -> None:
     with pytest.raises(DataValidationError, match=message):
         validate_records(records, "sft")
+
+
+@pytest.mark.parametrize(
+    ("instruction", "output", "minimum_length", "message"),
+    [
+        ("Give an answer.", "short", 10, "shorter than minimum length"),
+        ("Give an answer.", "yes yes yes yes", 1, "suspiciously repetitive"),
+        ("Repeat this instruction.", "Repeat this instruction!", 1, "copies the instruction"),
+    ],
+)
+def test_stronger_output_quality_failures(
+    instruction: str,
+    output: str,
+    minimum_length: int,
+    message: str,
+) -> None:
+    record = {
+        "id": "one",
+        "split": "train",
+        "instruction": instruction,
+        "input": "",
+        "output": output,
+        "source": "test",
+        "metadata": {},
+    }
+
+    with pytest.raises(DataValidationError, match=message):
+        validate_records(
+            [record],
+            "sft",
+            minimum_output_length=minimum_length,
+        )

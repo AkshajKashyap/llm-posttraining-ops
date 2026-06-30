@@ -3,587 +3,227 @@
     {
       "examples": [
         {
-          "expected_output": "47",
-          "generated_response": "First integer: 42. Second integer: 5.",
-          "id": "sft-train-0000",
-          "input": "First integer: 42. Second integer: 5.",
-          "instruction": "Add the two integers and return only the result.",
+          "expected_output": "Paris is the capital city of France.",
+          "generated_response": "France",
+          "id": "alpaca-001",
+          "input": "France",
+          "instruction": "Name the capital city of the country in the input.",
           "metrics": {
             "contains_expected_key_terms": 0.0,
             "empty_response": 0.0,
             "exact_match": 0.0,
-            "response_length": 6,
-            "token_overlap_f1": 0.0
+            "response_length": 1,
+            "token_overlap_f1": 0.25
           },
           "split": "train"
         },
         {
-          "expected_output": "59",
-          "generated_response": "First integer: 49. Second integer: 10.",
-          "id": "sft-train-0001",
-          "input": "First integer: 49. Second integer: 10.",
-          "instruction": "Add the two integers and return only the result.",
+          "expected_output": "The meeting will commence at twelve o'clock.",
+          "generated_response": "The meeting starts at noon.",
+          "id": "alpaca-002",
+          "input": "The meeting starts at noon.",
+          "instruction": "Rewrite the sentence to sound more formal.",
           "metrics": {
             "contains_expected_key_terms": 0.0,
             "empty_response": 0.0,
             "exact_match": 0.0,
-            "response_length": 6,
-            "token_overlap_f1": 0.0
+            "response_length": 5,
+            "token_overlap_f1": 0.4615384615384615
           },
           "split": "train"
         },
         {
-          "expected_output": "22",
-          "generated_response": "First integer: 16. Second integer: 6.",
-          "id": "sft-train-0002",
-          "input": "First integer: 16. Second integer: 6.",
-          "instruction": "Add the two integers and return only the result.",
+          "expected_output": "A practical benefit is reduced traffic congestion.",
+          "generated_response": "Focus on city traffic.",
+          "id": "alpaca-003",
+          "input": "Focus on city traffic.",
+          "instruction": "Give one practical benefit of using public transit.",
           "metrics": {
             "contains_expected_key_terms": 0.0,
             "empty_response": 0.0,
             "exact_match": 0.0,
-            "response_length": 6,
-            "token_overlap_f1": 0.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "70",
-          "generated_response": "First integer: 45. Second integer: 25.",
-          "id": "sft-train-0003",
-          "input": "First integer: 45. Second integer: 25.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 6,
-            "token_overlap_f1": 0.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "54",
-          "generated_response": "First integer: 39. Second integer: 15.",
-          "id": "sft-train-0004",
-          "input": "First integer: 39. Second integer: 15.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 6,
-            "token_overlap_f1": 0.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "7",
-          "generated_response": "First integer: 3. Second integer: 4.",
-          "id": "sft-train-0005",
-          "input": "First integer: 3. Second integer: 4.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 6,
-            "token_overlap_f1": 0.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "34",
-          "generated_response": "First integer: 16. Second integer: 18.",
-          "id": "sft-train-0006",
-          "input": "First integer: 16. Second integer: 18.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 6,
-            "token_overlap_f1": 0.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "296",
-          "generated_response": "First integer: 37. Second integer: 8.",
-          "id": "sft-train-0007",
-          "input": "First integer: 37. Second integer: 8.",
-          "instruction": "Multiply the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 6,
-            "token_overlap_f1": 0.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "256",
-          "generated_response": "First integer: 16. Second integer: 16.",
-          "id": "sft-validation-0000",
-          "input": "First integer: 16. Second integer: 16.",
-          "instruction": "Multiply the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 6,
-            "token_overlap_f1": 0.0
+            "response_length": 4,
+            "token_overlap_f1": 0.18181818181818182
           },
           "split": "validation"
         },
         {
-          "expected_output": "28",
-          "generated_response": "First integer: 2. Second integer: 26.",
-          "id": "sft-validation-0001",
-          "input": "First integer: 2. Second integer: 26.",
-          "instruction": "Add the two integers and return only the result.",
+          "expected_output": "A practical benefit is less single-use plastic waste.",
+          "generated_response": "Focus on environmental impact.",
+          "id": "alpaca-004",
+          "input": "Focus on environmental impact.",
+          "instruction": "Give one practical benefit of carrying a reusable bottle.",
           "metrics": {
             "contains_expected_key_terms": 0.0,
             "empty_response": 0.0,
             "exact_match": 0.0,
-            "response_length": 6,
-            "token_overlap_f1": 0.0
-          },
-          "split": "validation"
-        },
-        {
-          "expected_output": "690",
-          "generated_response": "First integer: 46. Second integer: 15.",
-          "id": "sft-test-0000",
-          "input": "First integer: 46. Second integer: 15.",
-          "instruction": "Multiply the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 6,
-            "token_overlap_f1": 0.0
-          },
-          "split": "test"
-        },
-        {
-          "expected_output": "25",
-          "generated_response": "First integer: 19. Second integer: 6.",
-          "id": "sft-test-0001",
-          "input": "First integer: 19. Second integer: 6.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 6,
+            "response_length": 4,
             "token_overlap_f1": 0.0
           },
           "split": "test"
         }
       ],
       "metrics": {
-        "average_response_length": 6.0,
+        "average_response_length": 3.5,
         "contains_expected_key_terms": 0.0,
         "empty_response_rate": 0.0,
         "exact_match": 0.0,
-        "token_overlap_f1": 0.0
+        "token_overlap_f1": 0.223339
       },
       "name": "echo"
     },
     {
       "examples": [
         {
-          "expected_output": "47",
-          "generated_response": "Based on the provided input: First integer: 42. Second integer: 5.",
-          "id": "sft-train-0000",
-          "input": "First integer: 42. Second integer: 5.",
-          "instruction": "Add the two integers and return only the result.",
+          "expected_output": "Paris is the capital city of France.",
+          "generated_response": "Based on the provided input: France",
+          "id": "alpaca-001",
+          "input": "France",
+          "instruction": "Name the capital city of the country in the input.",
           "metrics": {
             "contains_expected_key_terms": 0.0,
             "empty_response": 0.0,
             "exact_match": 0.0,
-            "response_length": 11,
-            "token_overlap_f1": 0.0
+            "response_length": 6,
+            "token_overlap_f1": 0.30769230769230765
           },
           "split": "train"
         },
         {
-          "expected_output": "59",
-          "generated_response": "Based on the provided input: First integer: 49. Second integer: 10.",
-          "id": "sft-train-0001",
-          "input": "First integer: 49. Second integer: 10.",
-          "instruction": "Add the two integers and return only the result.",
+          "expected_output": "The meeting will commence at twelve o'clock.",
+          "generated_response": "Based on the provided input: The meeting starts at noon.",
+          "id": "alpaca-002",
+          "input": "The meeting starts at noon.",
+          "instruction": "Rewrite the sentence to sound more formal.",
           "metrics": {
             "contains_expected_key_terms": 0.0,
             "empty_response": 0.0,
             "exact_match": 0.0,
-            "response_length": 11,
-            "token_overlap_f1": 0.0
+            "response_length": 10,
+            "token_overlap_f1": 0.33333333333333326
           },
           "split": "train"
         },
         {
-          "expected_output": "22",
-          "generated_response": "Based on the provided input: First integer: 16. Second integer: 6.",
-          "id": "sft-train-0002",
-          "input": "First integer: 16. Second integer: 6.",
-          "instruction": "Add the two integers and return only the result.",
+          "expected_output": "A practical benefit is reduced traffic congestion.",
+          "generated_response": "Based on the provided input: Focus on city traffic.",
+          "id": "alpaca-003",
+          "input": "Focus on city traffic.",
+          "instruction": "Give one practical benefit of using public transit.",
           "metrics": {
             "contains_expected_key_terms": 0.0,
             "empty_response": 0.0,
             "exact_match": 0.0,
-            "response_length": 11,
-            "token_overlap_f1": 0.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "70",
-          "generated_response": "Based on the provided input: First integer: 45. Second integer: 25.",
-          "id": "sft-train-0003",
-          "input": "First integer: 45. Second integer: 25.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 11,
-            "token_overlap_f1": 0.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "54",
-          "generated_response": "Based on the provided input: First integer: 39. Second integer: 15.",
-          "id": "sft-train-0004",
-          "input": "First integer: 39. Second integer: 15.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 11,
-            "token_overlap_f1": 0.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "7",
-          "generated_response": "Based on the provided input: First integer: 3. Second integer: 4.",
-          "id": "sft-train-0005",
-          "input": "First integer: 3. Second integer: 4.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 11,
-            "token_overlap_f1": 0.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "34",
-          "generated_response": "Based on the provided input: First integer: 16. Second integer: 18.",
-          "id": "sft-train-0006",
-          "input": "First integer: 16. Second integer: 18.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 11,
-            "token_overlap_f1": 0.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "296",
-          "generated_response": "Based on the provided input: First integer: 37. Second integer: 8.",
-          "id": "sft-train-0007",
-          "input": "First integer: 37. Second integer: 8.",
-          "instruction": "Multiply the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 11,
-            "token_overlap_f1": 0.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "256",
-          "generated_response": "Based on the provided input: First integer: 16. Second integer: 16.",
-          "id": "sft-validation-0000",
-          "input": "First integer: 16. Second integer: 16.",
-          "instruction": "Multiply the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 11,
-            "token_overlap_f1": 0.0
+            "response_length": 9,
+            "token_overlap_f1": 0.125
           },
           "split": "validation"
         },
         {
-          "expected_output": "28",
-          "generated_response": "Based on the provided input: First integer: 2. Second integer: 26.",
-          "id": "sft-validation-0001",
-          "input": "First integer: 2. Second integer: 26.",
-          "instruction": "Add the two integers and return only the result.",
+          "expected_output": "A practical benefit is less single-use plastic waste.",
+          "generated_response": "Based on the provided input: Focus on environmental impact.",
+          "id": "alpaca-004",
+          "input": "Focus on environmental impact.",
+          "instruction": "Give one practical benefit of carrying a reusable bottle.",
           "metrics": {
             "contains_expected_key_terms": 0.0,
             "empty_response": 0.0,
             "exact_match": 0.0,
-            "response_length": 11,
-            "token_overlap_f1": 0.0
-          },
-          "split": "validation"
-        },
-        {
-          "expected_output": "690",
-          "generated_response": "Based on the provided input: First integer: 46. Second integer: 15.",
-          "id": "sft-test-0000",
-          "input": "First integer: 46. Second integer: 15.",
-          "instruction": "Multiply the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 11,
-            "token_overlap_f1": 0.0
-          },
-          "split": "test"
-        },
-        {
-          "expected_output": "25",
-          "generated_response": "Based on the provided input: First integer: 19. Second integer: 6.",
-          "id": "sft-test-0001",
-          "input": "First integer: 19. Second integer: 6.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 0.0,
-            "empty_response": 0.0,
-            "exact_match": 0.0,
-            "response_length": 11,
+            "response_length": 9,
             "token_overlap_f1": 0.0
           },
           "split": "test"
         }
       ],
       "metrics": {
-        "average_response_length": 11.0,
+        "average_response_length": 8.5,
         "contains_expected_key_terms": 0.0,
         "empty_response_rate": 0.0,
         "exact_match": 0.0,
-        "token_overlap_f1": 0.0
+        "token_overlap_f1": 0.191506
       },
       "name": "template"
     },
     {
       "examples": [
         {
-          "expected_output": "47",
-          "generated_response": "47",
-          "id": "sft-train-0000",
-          "input": "First integer: 42. Second integer: 5.",
-          "instruction": "Add the two integers and return only the result.",
+          "expected_output": "Paris is the capital city of France.",
+          "generated_response": "Unable to determine an answer.",
+          "id": "alpaca-001",
+          "input": "France",
+          "instruction": "Name the capital city of the country in the input.",
           "metrics": {
-            "contains_expected_key_terms": 1.0,
+            "contains_expected_key_terms": 0.0,
             "empty_response": 0.0,
-            "exact_match": 1.0,
-            "response_length": 1,
-            "token_overlap_f1": 1.0
+            "exact_match": 0.0,
+            "response_length": 5,
+            "token_overlap_f1": 0.0
           },
           "split": "train"
         },
         {
-          "expected_output": "59",
-          "generated_response": "59",
-          "id": "sft-train-0001",
-          "input": "First integer: 49. Second integer: 10.",
-          "instruction": "Add the two integers and return only the result.",
+          "expected_output": "The meeting will commence at twelve o'clock.",
+          "generated_response": "Unable to determine an answer.",
+          "id": "alpaca-002",
+          "input": "The meeting starts at noon.",
+          "instruction": "Rewrite the sentence to sound more formal.",
           "metrics": {
-            "contains_expected_key_terms": 1.0,
+            "contains_expected_key_terms": 0.0,
             "empty_response": 0.0,
-            "exact_match": 1.0,
-            "response_length": 1,
-            "token_overlap_f1": 1.0
+            "exact_match": 0.0,
+            "response_length": 5,
+            "token_overlap_f1": 0.0
           },
           "split": "train"
         },
         {
-          "expected_output": "22",
-          "generated_response": "22",
-          "id": "sft-train-0002",
-          "input": "First integer: 16. Second integer: 6.",
-          "instruction": "Add the two integers and return only the result.",
+          "expected_output": "A practical benefit is reduced traffic congestion.",
+          "generated_response": "Unable to determine an answer.",
+          "id": "alpaca-003",
+          "input": "Focus on city traffic.",
+          "instruction": "Give one practical benefit of using public transit.",
           "metrics": {
-            "contains_expected_key_terms": 1.0,
+            "contains_expected_key_terms": 0.0,
             "empty_response": 0.0,
-            "exact_match": 1.0,
-            "response_length": 1,
-            "token_overlap_f1": 1.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "70",
-          "generated_response": "70",
-          "id": "sft-train-0003",
-          "input": "First integer: 45. Second integer: 25.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 1.0,
-            "empty_response": 0.0,
-            "exact_match": 1.0,
-            "response_length": 1,
-            "token_overlap_f1": 1.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "54",
-          "generated_response": "54",
-          "id": "sft-train-0004",
-          "input": "First integer: 39. Second integer: 15.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 1.0,
-            "empty_response": 0.0,
-            "exact_match": 1.0,
-            "response_length": 1,
-            "token_overlap_f1": 1.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "7",
-          "generated_response": "7",
-          "id": "sft-train-0005",
-          "input": "First integer: 3. Second integer: 4.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 1.0,
-            "empty_response": 0.0,
-            "exact_match": 1.0,
-            "response_length": 1,
-            "token_overlap_f1": 1.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "34",
-          "generated_response": "34",
-          "id": "sft-train-0006",
-          "input": "First integer: 16. Second integer: 18.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 1.0,
-            "empty_response": 0.0,
-            "exact_match": 1.0,
-            "response_length": 1,
-            "token_overlap_f1": 1.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "296",
-          "generated_response": "296",
-          "id": "sft-train-0007",
-          "input": "First integer: 37. Second integer: 8.",
-          "instruction": "Multiply the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 1.0,
-            "empty_response": 0.0,
-            "exact_match": 1.0,
-            "response_length": 1,
-            "token_overlap_f1": 1.0
-          },
-          "split": "train"
-        },
-        {
-          "expected_output": "256",
-          "generated_response": "256",
-          "id": "sft-validation-0000",
-          "input": "First integer: 16. Second integer: 16.",
-          "instruction": "Multiply the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 1.0,
-            "empty_response": 0.0,
-            "exact_match": 1.0,
-            "response_length": 1,
-            "token_overlap_f1": 1.0
+            "exact_match": 0.0,
+            "response_length": 5,
+            "token_overlap_f1": 0.0
           },
           "split": "validation"
         },
         {
-          "expected_output": "28",
-          "generated_response": "28",
-          "id": "sft-validation-0001",
-          "input": "First integer: 2. Second integer: 26.",
-          "instruction": "Add the two integers and return only the result.",
+          "expected_output": "A practical benefit is less single-use plastic waste.",
+          "generated_response": "Unable to determine an answer.",
+          "id": "alpaca-004",
+          "input": "Focus on environmental impact.",
+          "instruction": "Give one practical benefit of carrying a reusable bottle.",
           "metrics": {
-            "contains_expected_key_terms": 1.0,
+            "contains_expected_key_terms": 0.0,
             "empty_response": 0.0,
-            "exact_match": 1.0,
-            "response_length": 1,
-            "token_overlap_f1": 1.0
-          },
-          "split": "validation"
-        },
-        {
-          "expected_output": "690",
-          "generated_response": "690",
-          "id": "sft-test-0000",
-          "input": "First integer: 46. Second integer: 15.",
-          "instruction": "Multiply the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 1.0,
-            "empty_response": 0.0,
-            "exact_match": 1.0,
-            "response_length": 1,
-            "token_overlap_f1": 1.0
-          },
-          "split": "test"
-        },
-        {
-          "expected_output": "25",
-          "generated_response": "25",
-          "id": "sft-test-0001",
-          "input": "First integer: 19. Second integer: 6.",
-          "instruction": "Add the two integers and return only the result.",
-          "metrics": {
-            "contains_expected_key_terms": 1.0,
-            "empty_response": 0.0,
-            "exact_match": 1.0,
-            "response_length": 1,
-            "token_overlap_f1": 1.0
+            "exact_match": 0.0,
+            "response_length": 5,
+            "token_overlap_f1": 0.0
           },
           "split": "test"
         }
       ],
       "metrics": {
-        "average_response_length": 1.0,
-        "contains_expected_key_terms": 1.0,
+        "average_response_length": 5.0,
+        "contains_expected_key_terms": 0.0,
         "empty_response_rate": 0.0,
-        "exact_match": 1.0,
-        "token_overlap_f1": 1.0
+        "exact_match": 0.0,
+        "token_overlap_f1": 0.0
       },
       "name": "keyword_rule"
     }
   ],
   "dataset": {
-    "path": "data/processed/demo/sft.jsonl",
-    "record_count": 12,
+    "path": "data/processed/custom/sft.jsonl",
+    "record_count": 4,
     "split_counts": {
-      "test": 2,
-      "train": 8,
-      "validation": 2
+      "test": 1,
+      "train": 2,
+      "validation": 1
     }
   },
   "schema_version": "1.0"

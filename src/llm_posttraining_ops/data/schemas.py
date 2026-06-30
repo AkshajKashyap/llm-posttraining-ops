@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
-from typing import Literal, TypeAlias
+from dataclasses import asdict, dataclass, field
+from typing import Any, Literal, TypeAlias
 
 SplitName: TypeAlias = Literal["train", "validation", "test"]
 SPLIT_NAMES: tuple[SplitName, ...] = ("train", "validation", "test")
@@ -11,15 +11,17 @@ SPLIT_NAMES: tuple[SplitName, ...] = ("train", "validation", "test")
 
 @dataclass(frozen=True, slots=True)
 class SFTRecord:
-    """A supervised fine-tuning instruction/response example."""
+    """A normalized supervised fine-tuning instruction/response example."""
 
     id: str
     split: SplitName
     instruction: str
     input: str
     output: str
+    source: str = "unknown"
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a JSON-serializable representation."""
 
         return asdict(self)

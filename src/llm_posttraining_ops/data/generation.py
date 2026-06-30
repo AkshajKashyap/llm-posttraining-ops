@@ -39,6 +39,12 @@ def generate_sft_records(
                     instruction=instruction,
                     input=f"First integer: {left}. Second integer: {right}.",
                     output=str(answer),
+                    source="deterministic-demo",
+                    metadata={
+                        "generator": "arithmetic-v1",
+                        "operation": operation,
+                        "seed": seed,
+                    },
                 )
             )
     return records
